@@ -6,6 +6,7 @@ import { SwitchProps, useSwitch } from "@nextui-org/switch";
 import { useTheme } from "next-themes";
 import { useIsSSR } from "@react-aria/ssr";
 import clsx from "clsx";
+import { IoSunnyOutline, IoMoonOutline } from "react-icons/io5";
 
 export interface ThemeSwitchProps {
   className?: string;
@@ -70,7 +71,11 @@ export const ThemeSwitch: FC<ThemeSwitchProps> = ({
           ),
         })}
       >
-        {!isSelected || isSSR ? <p>Light</p> : <p>Dark</p>}
+        {!isSelected || isSSR ? (
+          <IoSunnyOutline size={28} />
+        ) : (
+          <IoMoonOutline size={24} />
+        )}
       </div>
     </Component>
   );
