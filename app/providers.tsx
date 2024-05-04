@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { NextUIProvider } from "@nextui-org/system";
-import { useRouter } from "next/navigation";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { ThemeProviderProps } from "next-themes/dist/types";
-import { Web3ModalProivder } from "@/context/web3modal";
+import { NextUIProvider } from '@nextui-org/system';
+import { useRouter } from 'next/navigation';
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import type { ThemeProviderProps } from 'next-themes/dist/types';
+import * as React from 'react';
+
+import { Web3ModalProivder } from '@/context/web3modal';
 
 export interface ProvidersProps {
   children: React.ReactNode;

@@ -1,31 +1,32 @@
-"use client";
+'use client';
 
-import { Web3Modal } from "@web3modal/ethers/dist/types/src/client";
-import { createWeb3Modal, defaultConfig } from "@web3modal/ethers/react";
-import { useTheme } from "next-themes";
-import { PropsWithChildren, useEffect, useState } from "react";
+import type { Web3Modal } from '@web3modal/ethers/dist/types/src/client';
+import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
+import { useTheme } from 'next-themes';
+import type { PropsWithChildren } from 'react';
+import { useEffect, useState } from 'react';
 
 const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID;
 
 const hardhat = {
   chainId: 1337,
-  name: "Hardhat",
-  currency: "ETH",
-  explorerUrl: "https://etherscan.io",
-  rpcUrl: "http://127.0.0.1:8545/",
+  name: 'Hardhat',
+  currency: 'ETH',
+  explorerUrl: 'https://etherscan.io',
+  rpcUrl: 'http://127.0.0.1:8545/',
 };
 
 const metadata = {
-  name: "EtherHomes",
-  description: "No descriptions",
-  url: "https://example.com",
-  icons: ["https://avatars.mywebsite.com/"],
+  name: 'EtherHomes',
+  description: 'No descriptions',
+  url: 'https://example.com',
+  icons: ['https://avatars.mywebsite.com/'],
 };
 
 const ethersConfig = defaultConfig({
   metadata,
 
-  rpcUrl: "http://127.0.0.1:8545/",
+  rpcUrl: 'http://127.0.0.1:8545/',
   defaultChainId: 1337,
 });
 
@@ -41,7 +42,7 @@ export const Web3ModalProivder: React.FC<PropsWithChildren> = ({
       chains: [hardhat],
       projectId: projectId as string,
       enableAnalytics: false,
-      themeMode: "light",
+      themeMode: 'light',
     });
 
     if (w3m != null) {
@@ -52,7 +53,7 @@ export const Web3ModalProivder: React.FC<PropsWithChildren> = ({
 
   useEffect(() => {
     if (modal != null) {
-      modal.setThemeMode(theme as "light" | "dark");
+      modal.setThemeMode(theme as 'light' | 'dark');
     }
   }, [modal, theme]);
 

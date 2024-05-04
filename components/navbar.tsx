@@ -1,20 +1,18 @@
-"use client";
+'use client';
 
 import {
   Navbar as NextUINavbar,
-  NavbarContent,
   NavbarBrand,
+  NavbarContent,
   NavbarItem,
-} from "@nextui-org/navbar";
+} from '@nextui-org/navbar';
+import { link as linkStyles } from '@nextui-org/theme';
+import { useWeb3ModalAccount } from '@web3modal/ethers/react';
+import clsx from 'clsx';
+import NextLink from 'next/link';
 
-import { link as linkStyles } from "@nextui-org/theme";
-
-import { siteConfig } from "@/config/site";
-import NextLink from "next/link";
-import clsx from "clsx";
-
-import { ThemeSwitch } from "@/components/theme-switch";
-import { useWeb3ModalAccount } from "@web3modal/ethers/react";
+import { ThemeSwitch } from '@/components/theme-switch';
+import { siteConfig } from '@/config/site';
 
 export const Navbar = () => {
   const { isConnected } = useWeb3ModalAccount();
@@ -22,18 +20,18 @@ export const Navbar = () => {
   return (
     <NextUINavbar maxWidth="xl" position="sticky">
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
-        <NavbarBrand as="li" className="gap-3 max-w-fit">
-          <NextLink className="flex justify-start items-center gap-1" href="/">
+        <NavbarBrand as="li" className="max-w-fit gap-3">
+          <NextLink className="flex items-center justify-start gap-1" href="/">
             <p className="font-bold text-inherit">ACME</p>
           </NextLink>
         </NavbarBrand>
-        <ul className="flex gap-4 justify-start ml-2">
+        <ul className="ml-2 flex justify-start gap-4">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
                 className={clsx(
-                  linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium"
+                  linkStyles({ color: 'foreground' }),
+                  'data-[active=true]:font-medium data-[active=true]:text-primary',
                 )}
                 color="foreground"
                 href={item.href}
