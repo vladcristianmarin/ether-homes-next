@@ -17,7 +17,7 @@
   "overrides": [
     // Configuration for TypeScript files
     {
-      "files": ["**/*.ts", "**/*.tsx"],
+      "files": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.cts"],
       "plugins": [
         "@next/eslint-plugin-next",
         "@typescript-eslint",
@@ -40,6 +40,7 @@
         "prettier/prettier": [
           "error",
           {
+            "trailingComma": "all",
             "singleQuote": true,
             "endOfLine": "auto"
           }
@@ -67,7 +68,8 @@
         "unused-imports/no-unused-vars": [
           "error",
           { "argsIgnorePattern": "^_" }
-        ]
+        ],
+        "import/no-extraneous-dependencies": ["off"]
       }
     }
   ]

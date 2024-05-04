@@ -37,19 +37,19 @@ next-env.d.ts
 #Solidity
 
 .solidity/node_modules
-/solidity/.env
+/.env
 
 # Hardhat files
-/solidity/cache
-/solidity/artifacts
+/cache
+/artifacts
 
 # TypeChain files
-/solidity/typechain
-/solidity/typechain-types
+/typechain
+/typechain-types
 
-# solidity-coverage files
-/solidity/coverage
-//soliditycoverage.json
+#solidity-coverage files
+/coverage
+/coverage.json
 
 # Hardhat Ignition default folder for deployments against a local node
-/solidityignition/deployments/chain-31337
+/ignition/deployments/chain-31337
