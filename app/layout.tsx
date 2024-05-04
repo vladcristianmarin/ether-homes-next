@@ -1,8 +1,10 @@
 import '@/styles/globals.css';
+import 'react-toastify/dist/ReactToastify.css';
 
 import clsx from 'clsx';
 import type { Metadata, Viewport } from 'next';
 import React from 'react';
+import { ToastContainer } from 'react-toastify';
 
 import { Navbar } from '@/components/navbar';
 import { fontSans } from '@/config/fonts';
@@ -50,6 +52,8 @@ export default function RootLayout({
             </main>
           </div>
         </Providers>
+
+        <ToastContainer />
       </body>
     </html>
   );

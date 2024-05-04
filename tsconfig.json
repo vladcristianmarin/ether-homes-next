@@ -29,7 +29,9 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "hardhat.config.cts",
-    "test/RealEstate.cts"
+    "test/RealEstate.cts",
+    "scripts/deploy.cts",
+    "./typechain-types/contracts"
   ],
   "exclude": ["node_modules"]
 }

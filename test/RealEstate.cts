@@ -52,4 +52,15 @@ describe('RealEstate', () => {
 
     expect(tokenURI).to.be.equal(TEST_IPFS[1]);
   });
+
+  it('should return address minted tokens', async () => {
+    const transaction = await realEstate
+      .connect(seller)
+      .createTokenURI(TEST_IPFS[0]);
+    await transaction.wait();
+
+    const ownedTokens = await realEstate.getOwnedTokens(seller);
+
+    expect(ownedTokens[0]).to.be.equal('0');
+  });
 });

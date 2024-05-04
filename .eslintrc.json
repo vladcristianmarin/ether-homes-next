@@ -38,7 +38,7 @@
       "rules": {
         "no-console": "off",
         "prettier/prettier": [
-          "error",
+          "warn",
           {
             "trailingComma": "all",
             "singleQuote": true,
@@ -62,14 +62,19 @@
         "simple-import-sort/imports": "error", // Import configuration for `eslint-plugin-simple-import-sort`
         "simple-import-sort/exports": "error", // Export configuration for `eslint-plugin-simple-import-sort`
         "import/order": "off", // Avoid conflict rule between `eslint-plugin-import` and `eslint-plugin-simple-import-sort`
-        "@typescript-eslint/no-unused-vars": "warn",
+        "@typescript-eslint/no-unused-vars": [
+          "warn",
+          { "argsIgnorePattern": "^_" }
+        ],
         "@typescript-eslint/no-unused-expressions": "off",
-        "unused-imports/no-unused-imports": "error",
-        "unused-imports/no-unused-vars": [
+        "unused-imports/no-unused-imports": [
           "error",
           { "argsIgnorePattern": "^_" }
         ],
-        "import/no-extraneous-dependencies": ["off"]
+        "unused-imports/no-unused-vars": "off",
+        "import/no-extraneous-dependencies": ["off"],
+        "react/self-closing-comp": "off",
+        "react/no-array-index-key": "off"
       }
     }
   ]
