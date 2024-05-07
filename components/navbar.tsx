@@ -22,7 +22,7 @@ export const Navbar = () => {
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="max-w-fit gap-3">
           <NextLink className="flex items-center justify-start gap-1" href="/">
-            <p className="font-bold text-inherit">ACME</p>
+            <p className="font-bold text-inherit">RETH</p>
           </NextLink>
         </NavbarBrand>
         <ul className="ml-2 flex justify-start gap-4">

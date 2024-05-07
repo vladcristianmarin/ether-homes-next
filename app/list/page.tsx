@@ -3,39 +3,38 @@
 import { Button } from '@nextui-org/button';
 import { Input } from '@nextui-org/input';
 import { Link } from '@nextui-org/link';
-import {
-  useWeb3ModalAccount,
-  useWeb3ModalProvider,
-} from '@web3modal/ethers/react';
+import { Progress } from '@nextui-org/progress';
 import axios from 'axios';
-import {
-  BrowserProvider,
-  Contract,
-  type JsonRpcSigner,
-  type TransactionReceipt,
-  type TransactionResponse,
-} from 'ethers';
+import { type TransactionReceipt, type TransactionResponse } from 'ethers';
 import { useFormik } from 'formik';
-import React, { useEffect, useState } from 'react';
-import { LuExternalLink } from 'react-icons/lu';
+import React, { useEffect, useRef, useState } from 'react';
+import { LuClipboardCopy, LuExternalLink } from 'react-icons/lu';
 import { toast } from 'react-toastify';
 
-import RealEstateAbi from '@/abis/RealEstate.json';
+import type { DocumentsUploaderController } from '@/components/documents-uploader';
 import DocumentsUploader from '@/components/documents-uploader';
+import type { ImageUploaderController } from '@/components/image-uploader';
 import ImageUploader from '@/components/image-uploader';
-import type { RealEstate } from '@/typechain-types';
+import { useContracts } from '@/context/contracts-context';
+import { useWallet } from '@/context/wallet-context';
 
 const ListPropertyPage = () => {
-  const { walletProvider } = useWeb3ModalProvider();
-  const { address } = useWeb3ModalAccount();
-
-  const [realEstate, setRealEstate] = useState<RealEstate>();
-  const [signer, setSigner] = useState<JsonRpcSigner>();
   const [ownedTokens, setOwnedTokens] = useState<string[]>([]);
   const [refetchOwnedTokens, setRefetchOwnedTokens] = useState<boolean>(true);
 
   const [image, setImage] = useState<File | null>(null);
   const [documents, setDocuments] = useState<File[]>([]);
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isProccessing, setIsProccessing] = useState<boolean>(false);
+
+  const [statusMessage, setStatusMessage] = useState<string>('');
+
+  const imageUploaderRef = useRef<ImageUploaderController>(null);
+  const documentsUploaderRef = useRef<DocumentsUploaderController>(null);
+
+  const { account } = useWallet();
+  const { realEstate, realEstateAddress } = useContracts();
 
   const uploadFilesToIpfs = async (files: File[]) => {
     const uploadPromises = files.map(async (file) => {
@@ -91,58 +90,70 @@ const ListPropertyPage = () => {
         return;
       }
 
-      const [photoHash, ...documentsHash] = await uploadFilesToIpfs([
-        image,
-        ...documents,
-      ]);
-
-      const json = JSON.stringify({
-        name: values.name,
-        description: values.description,
-        image: `ipfs://${photoHash}`,
-        attributes: [
-          { trait_type: 'address', value: values.address },
-          { display_type: 'number', trait_type: 'Year', value: values.year },
-          {
-            display_type: 'number',
-            trait_type: 'Surface',
-            value: values.surface,
-          },
-          {
-            display_type: 'number',
-            trait_type: 'TotalSurface',
-            value: values.totalSurface,
-          },
-          {
-            display_type: 'number',
-            trait_type: 'TotalSurface',
-            value: values.totalSurface,
-          },
-          { display_type: 'number', trait_type: 'Floor', value: values.floor },
-          {
-            display_type: 'number',
-            trait_type: 'Nb of rooms',
-            value: values.nbRooms,
-          },
-          {
-            display_type: 'number',
-            trait_type: 'Nb of bedrooms',
-            value: values.nbBedrooms,
-          },
-          {
-            display_type: 'number',
-            trait_type: 'Nb of bathrooms',
-            value: values.nbBathrooms,
-          },
-          ...documentsHash.map((docHash) => ({
-            display_type: 'url',
-            trait_type: 'Document',
-            value: `ipfs://${docHash}`,
-          })),
-        ],
-      });
-
       try {
+        setIsLoading(true);
+
+        setStatusMessage('Uploading photo and documents to IPFS');
+
+        const [photoHash, ...documentsHash] = await uploadFilesToIpfs([
+          image,
+          ...documents,
+        ]);
+
+        setStatusMessage('Creating JSON object');
+
+        const json = JSON.stringify({
+          name: values.name,
+          description: values.description,
+          image: `ipfs://${photoHash}`,
+          attributes: [
+            { trait_type: 'address', value: values.address },
+            { display_type: 'number', trait_type: 'Year', value: values.year },
+            {
+              display_type: 'number',
+              trait_type: 'Surface',
+              value: values.surface,
+            },
+            {
+              display_type: 'number',
+              trait_type: 'TotalSurface',
+              value: values.totalSurface,
+            },
+            {
+              display_type: 'number',
+              trait_type: 'TotalSurface',
+              value: values.totalSurface,
+            },
+            {
+              display_type: 'number',
+              trait_type: 'Floor',
+              value: values.floor,
+            },
+            {
+              display_type: 'number',
+              trait_type: 'Nb of rooms',
+              value: values.nbRooms,
+            },
+            {
+              display_type: 'number',
+              trait_type: 'Nb of bedrooms',
+              value: values.nbBedrooms,
+            },
+            {
+              display_type: 'number',
+              trait_type: 'Nb of bathrooms',
+              value: values.nbBathrooms,
+            },
+            ...documentsHash.map((docHash) => ({
+              display_type: 'url',
+              trait_type: 'Document',
+              value: `ipfs://${docHash}`,
+            })),
+          ],
+        });
+
+        setStatusMessage('Uploading data to IPFS');
+
         const response = await axios.post(
           'https://api.pinata.cloud/pinning/pinJSONToIPFS',
           json,
@@ -157,12 +168,22 @@ const ListPropertyPage = () => {
         const ipfsHash: string = response.data.IpfsHash;
 
         formik.resetForm();
+        imageUploaderRef.current?.clearFiles();
+        documentsUploaderRef.current?.clearFiles();
 
         if (realEstate) {
+          setIsLoading(false);
+          setIsProccessing(true);
+
+          setStatusMessage('Proccessing token NFT... this might take a while!');
+
           const transaction: TransactionResponse =
             await realEstate.createTokenURI(`ipfs://${ipfsHash}`);
+
           const transactionResult: TransactionReceipt | null =
             await transaction.wait();
+
+          setIsProccessing(false);
 
           if (transactionResult) {
             setRefetchOwnedTokens(true);
@@ -174,80 +195,102 @@ const ListPropertyPage = () => {
       } catch (err: any) {
         toast(`Something went wrong ${err?.message ?? err}`, { type: 'error' });
         console.error(err);
+      } finally {
+        setIsLoading(false);
+        setIsProccessing(false);
       }
     },
   });
 
   useEffect(() => {
-    const setContract = async () => {
-      const provider = new BrowserProvider(walletProvider!);
-      const localSigner = await provider.getSigner(address);
-
-      setSigner(localSigner);
-
-      // @ts-expect-error
-      const realEstateContract: RealEstate = new Contract(
-        RealEstateAbi.address,
-        RealEstateAbi.abi,
-        localSigner,
-      );
-
-      if (realEstateContract) {
-        setRealEstate(realEstateContract);
-      }
-    };
-
-    if (walletProvider != null && address != null) {
-      setContract().then(() => {
-        toast(`Realestate contract created`, {
-          type: 'success',
-          hideProgressBar: true,
-          autoClose: 500,
-        });
-      });
-    }
-  }, [address, walletProvider]);
-
-  useEffect(() => {
     const getOwnedTokens = async () => {
-      if (realEstate && signer) {
-        const tokens = await realEstate.getOwnedTokens(signer);
-        const tokenURIs = await Promise.all(
-          tokens.map((token) => realEstate.tokenURI(token)),
-        );
-        setOwnedTokens(tokenURIs);
-        setRefetchOwnedTokens(false);
+      if (realEstate && account) {
+        try {
+          const tokens = await realEstate.getOwnedTokens(account);
+          const tokenURIs = await Promise.all(
+            tokens.map((token) => realEstate.tokenURI(token)),
+          );
+          setOwnedTokens(tokenURIs);
+          setRefetchOwnedTokens(false);
+        } catch (e) {
+          console.error(e);
+        }
       }
     };
 
-    if (refetchOwnedTokens && realEstate && signer) {
+    if (refetchOwnedTokens && realEstate && account) {
       getOwnedTokens().then();
     }
-  }, [realEstate, refetchOwnedTokens, signer]);
+  }, [realEstate, refetchOwnedTokens, account]);
+
+  useEffect(() => {
+    setRefetchOwnedTokens(true);
+  }, [account]);
+
+  const copyAddressHandler = () => {
+    if (realEstateAddress) {
+      navigator.clipboard.writeText(realEstateAddress);
+      toast(`${realEstateAddress} copied to clipboard!`, {
+        type: 'success',
+        autoClose: 500,
+        hideProgressBar: true,
+      });
+    }
+  };
 
   return (
-    <div className="flex flex-row items-start justify-center gap-10">
-      <div className="flex basis-[45%] border-spacing-2 flex-col gap-2 rounded-md border-1 border-neutral-400 p-2">
-        <h2 className="text-lg font-semibold">Your properties</h2>
-        <ul className="flex flex-col gap-3">
-          {ownedTokens.length === 0 ? (
-            <li>Your don&apos;t have any property</li>
-          ) : (
-            ownedTokens.map((token) => {
-              return (
-                <Link key={token} color="foreground" href={`${token}`}>
-                  <div className="flex w-full items-center gap-2">
-                    <p>{token}</p>
-                    <LuExternalLink className="ml-auto" />
-                  </div>
-                </Link>
-              );
-            })
-          )}
-        </ul>
+    <div className="mb-24 flex flex-row items-start justify-center gap-10">
+      <div className="flex basis-[45%] flex-col items-start gap-3">
+        <div className="flex w-full flex-1 border-spacing-2 flex-col gap-2 rounded-md border-1 border-neutral-400 p-2">
+          <h2 className="text-lg font-semibold">Your properties</h2>
+          <ul className="flex flex-col gap-3">
+            {ownedTokens.length === 0 ? (
+              <li>Your don&apos;t have any property</li>
+            ) : (
+              ownedTokens.map((token) => {
+                return (
+                  <Link key={token} color="foreground" href={`${token}`}>
+                    <div className="flex w-full items-center gap-2">
+                      <p>{token}</p>
+                      <LuExternalLink className="ml-auto" />
+                    </div>
+                  </Link>
+                );
+              })
+            )}
+          </ul>
+        </div>
+        <Button
+          type="button"
+          color="success"
+          variant="shadow"
+          size="md"
+          endContent={<LuClipboardCopy className="text-lg text-white" />}
+          onClick={copyAddressHandler}
+        >
+          <p className="text-medium text-white">
+            Copy ReSTATE address to clipboard
+          </p>
+        </Button>
       </div>
 
       <div className="flex basis-[55%] border-spacing-2 flex-col gap-2 rounded-md border-1 border-neutral-400 p-2">
+        {isLoading || isProccessing ? (
+          <div className="flex flex-col items-center gap-2">
+            <p
+              className={`${isLoading ? 'text-green-600' : 'text-yellow-600'} text-lg font-semibold italic`}
+            >
+              {statusMessage}
+            </p>
+            <Progress
+              color={isLoading ? 'success' : 'warning'}
+              size="sm"
+              isIndeterminate
+              aria-label={statusMessage}
+            />
+          </div>
+        ) : null}
+
         <h2 className="text-lg font-semibold">Create property NFT</h2>
         <form
           className="grid grid-cols-2 gap-2"
@@ -344,17 +387,27 @@ const ListPropertyPage = () => {
           />
           <div className="col-span-2">
             <p className="mb-2 ml-2 text-sm text-gray-700">Upload NFT image</p>
-            <ImageUploader onAcceptedFiles={(photos) => setImage(photos[0])} />
+            <ImageUploader
+              ref={imageUploaderRef}
+              onAcceptedFiles={(photos) => setImage(photos[0])}
+            />
           </div>
           <div className="col-span-2">
             <p className="mb-2 ml-2 text-sm text-gray-700">
               Upload property documents
             </p>
             <DocumentsUploader
+              ref={documentsUploaderRef}
               onAcceptedFiles={(documents) => setDocuments(documents)}
             />
           </div>
-          <Button className="col-span-2" type="submit" color="primary">
+          <Button
+            className="col-span-2"
+            type="submit"
+            color="primary"
+            isLoading={isLoading}
+            isDisabled={isLoading || isProccessing}
+          >
             Create
           </Button>
         </form>

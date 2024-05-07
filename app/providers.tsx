@@ -6,6 +6,8 @@ import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import type { ThemeProviderProps } from 'next-themes/dist/types';
 import * as React from 'react';
 
+import ContractsContextProvider from '@/context/contracts-context';
+import WalletContextProvider from '@/context/wallet-context';
 import { Web3ModalProivder } from '@/context/web3modal';
 
 export interface ProvidersProps {
@@ -19,7 +21,11 @@ export function Providers({ children, themeProps }: ProvidersProps) {
   return (
     <NextUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
-        <Web3ModalProivder>{children}</Web3ModalProivder>
+        <Web3ModalProivder>
+          <WalletContextProvider>
+            <ContractsContextProvider>{children}</ContractsContextProvider>
+          </WalletContextProvider>
+        </Web3ModalProivder>
       </NextThemesProvider>
     </NextUIProvider>
   );

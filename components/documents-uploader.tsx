@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useState } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FaFilePdf } from 'react-icons/fa';
 
@@ -7,10 +7,25 @@ interface DocumentsUploaderProps {
   onAcceptedFiles?: (files: File[]) => void | Promise<void>;
 }
 
-const DocumentsUploader: React.FC<DocumentsUploaderProps> = ({
-  onAcceptedFiles,
-}) => {
+export interface DocumentsUploaderController {
+  clearFiles: () => void;
+}
+
+const DocumentsUploader = forwardRef<
+  DocumentsUploaderController,
+  DocumentsUploaderProps
+>(function DocumentsUploader({ onAcceptedFiles }, ref) {
   const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
+
+  useImperativeHandle(
+    ref,
+    () => {
+      return {
+        clearFiles: () => setAcceptedFiles([]),
+      };
+    },
+    [],
+  );
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -58,6 +73,6 @@ const DocumentsUploader: React.FC<DocumentsUploaderProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default DocumentsUploader;
