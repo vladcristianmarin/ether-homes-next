@@ -74,7 +74,8 @@
         "unused-imports/no-unused-vars": "off",
         "import/no-extraneous-dependencies": ["off"],
         "react/self-closing-comp": "off",
-        "react/no-array-index-key": "off"
+        "react/no-array-index-key": "off",
+        "@typescript-eslint/no-shadow": "off"
       }
     }
   ]

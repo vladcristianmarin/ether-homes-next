@@ -2,7 +2,7 @@
 
 import { Button } from '@nextui-org/button';
 import { Input } from '@nextui-org/input';
-import { Card, Divider } from '@nextui-org/react';
+import { Link } from '@nextui-org/link';
 import {
   useWeb3ModalAccount,
   useWeb3ModalProvider,
@@ -17,22 +17,13 @@ import {
 } from 'ethers';
 import { useFormik } from 'formik';
 import React, { useEffect, useState } from 'react';
+import { LuExternalLink } from 'react-icons/lu';
 import { toast } from 'react-toastify';
 
 import RealEstateAbi from '@/abis/RealEstate.json';
+import DocumentsUploader from '@/components/documents-uploader';
+import ImageUploader from '@/components/image-uploader';
 import type { RealEstate } from '@/typechain-types';
-
-type Attribute = {
-  trait_type: string;
-  display_type?: string;
-  value: string | number; // Assuming value can be either string or number
-};
-
-type Property = {
-  name: string;
-  description: string;
-  attributes: Attribute[];
-};
 
 const ListPropertyPage = () => {
   const { walletProvider } = useWeb3ModalProvider();
@@ -40,8 +31,35 @@ const ListPropertyPage = () => {
 
   const [realEstate, setRealEstate] = useState<RealEstate>();
   const [signer, setSigner] = useState<JsonRpcSigner>();
-  const [ownedTokens, setOwnedTokens] = useState<Property[]>([]);
+  const [ownedTokens, setOwnedTokens] = useState<string[]>([]);
   const [refetchOwnedTokens, setRefetchOwnedTokens] = useState<boolean>(true);
+
+  const [image, setImage] = useState<File | null>(null);
+  const [documents, setDocuments] = useState<File[]>([]);
+
+  const uploadFilesToIpfs = async (files: File[]) => {
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+          },
+        },
+      );
+
+      return response.data;
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    return results.map((result) => result.IpfsHash);
+  };
 
   const formik = useFormik<{
     name: string;
@@ -68,10 +86,20 @@ const ListPropertyPage = () => {
       nbBathrooms: 0,
     },
     onSubmit: async (values) => {
+      if (image == null || documents.length === 0) {
+        toast('Please upload image and/or documents', { type: 'error' });
+        return;
+      }
+
+      const [photoHash, ...documentsHash] = await uploadFilesToIpfs([
+        image,
+        ...documents,
+      ]);
+
       const json = JSON.stringify({
         name: values.name,
         description: values.description,
-        // image: 'ipfs://QmQoEJZh1T5BvtTHtN6pvQrLpQ4SRTSQ8La2oWcR2PP6CY',
+        image: `ipfs://${photoHash}`,
         attributes: [
           { trait_type: 'address', value: values.address },
           { display_type: 'number', trait_type: 'Year', value: values.year },
@@ -106,6 +134,11 @@ const ListPropertyPage = () => {
             trait_type: 'Nb of bathrooms',
             value: values.nbBathrooms,
           },
+          ...documentsHash.map((docHash) => ({
+            display_type: 'url',
+            trait_type: 'Document',
+            value: `ipfs://${docHash}`,
+          })),
         ],
       });
 
@@ -127,7 +160,7 @@ const ListPropertyPage = () => {
 
         if (realEstate) {
           const transaction: TransactionResponse =
-            await realEstate.createTokenURI(ipfsHash);
+            await realEstate.createTokenURI(`ipfs://${ipfsHash}`);
           const transactionResult: TransactionReceipt | null =
             await transaction.wait();
 
@@ -179,21 +212,11 @@ const ListPropertyPage = () => {
     const getOwnedTokens = async () => {
       if (realEstate && signer) {
         const tokens = await realEstate.getOwnedTokens(signer);
-        setOwnedTokens([]);
-        tokens.forEach(async (token) => {
-          const tokenURI = await realEstate.tokenURI(token);
-          try {
-            const { data } = await axios.get<Property>(
-              `https://gateway.pinata.cloud/ipfs/${tokenURI}`,
-            );
-
-            setOwnedTokens((curr) => [...curr, data]);
-          } catch (err) {
-            console.error(err);
-          } finally {
-            setRefetchOwnedTokens(false);
-          }
-        });
+        const tokenURIs = await Promise.all(
+          tokens.map((token) => realEstate.tokenURI(token)),
+        );
+        setOwnedTokens(tokenURIs);
+        setRefetchOwnedTokens(false);
       }
     };
 
@@ -204,42 +227,27 @@ const ListPropertyPage = () => {
 
   return (
     <div className="flex flex-row items-start justify-center gap-10">
-      <div className="flex border-spacing-2 flex-col gap-2 rounded-md border-1 border-neutral-400 p-2">
+      <div className="flex basis-[45%] border-spacing-2 flex-col gap-2 rounded-md border-1 border-neutral-400 p-2">
         <h2 className="text-lg font-semibold">Your properties</h2>
-        <ul>
+        <ul className="flex flex-col gap-3">
           {ownedTokens.length === 0 ? (
             <li>Your don&apos;t have any property</li>
           ) : (
-            ownedTokens.map((token, index) => {
+            ownedTokens.map((token) => {
               return (
-                <Card
-                  className="min-w-96"
-                  shadow="sm"
-                  key={`${token.name}-${index}`}
-                >
-                  <div className="p-4">
-                    <h3>{token.name}</h3>
-                    <Divider />
-                    <div className="mt-4">
-                      {token.attributes.map((attribute, att_index) => (
-                        <div
-                          key={`${attribute}-${att_index}`}
-                          className="flex justify-between py-2"
-                        >
-                          <p>{attribute.trait_type}</p>
-                          <p>{attribute.value}</p>
-                        </div>
-                      ))}
-                    </div>
+                <Link key={token} color="foreground" href={`${token}`}>
+                  <div className="flex w-full items-center gap-2">
+                    <p>{token}</p>
+                    <LuExternalLink className="ml-auto" />
                   </div>
-                </Card>
+                </Link>
               );
             })
           )}
         </ul>
       </div>
 
-      <div className="flex border-spacing-2 flex-col gap-2 rounded-md border-1 border-neutral-400 p-2">
+      <div className="flex basis-[55%] border-spacing-2 flex-col gap-2 rounded-md border-1 border-neutral-400 p-2">
         <h2 className="text-lg font-semibold">Create property NFT</h2>
         <form
           className="grid grid-cols-2 gap-2"
@@ -334,6 +342,18 @@ const ListPropertyPage = () => {
             value={formik.values.nbBathrooms.toString()}
             onChange={formik.handleChange}
           />
+          <div className="col-span-2">
+            <p className="mb-2 ml-2 text-sm text-gray-700">Upload NFT image</p>
+            <ImageUploader onAcceptedFiles={(photos) => setImage(photos[0])} />
+          </div>
+          <div className="col-span-2">
+            <p className="mb-2 ml-2 text-sm text-gray-700">
+              Upload property documents
+            </p>
+            <DocumentsUploader
+              onAcceptedFiles={(documents) => setDocuments(documents)}
+            />
+          </div>
           <Button className="col-span-2" type="submit" color="primary">
             Create
           </Button>
