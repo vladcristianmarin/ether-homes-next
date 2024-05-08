@@ -5,7 +5,6 @@ import { Input } from '@nextui-org/input';
 import { Link } from '@nextui-org/link';
 import { Progress } from '@nextui-org/progress';
 import axios from 'axios';
-import { type TransactionReceipt, type TransactionResponse } from 'ethers';
 import { useFormik } from 'formik';
 import React, { useEffect, useRef, useState } from 'react';
 import { LuClipboardCopy, LuExternalLink } from 'react-icons/lu';
@@ -17,6 +16,7 @@ import type { ImageUploaderController } from '@/components/image-uploader';
 import ImageUploader from '@/components/image-uploader';
 import { useContracts } from '@/context/contracts-context';
 import { useWallet } from '@/context/wallet-context';
+import { mapObjectToIpfsAttribute } from '@/utils';
 
 const ListPropertyPage = () => {
   const [ownedTokens, setOwnedTokens] = useState<string[]>([]);
@@ -63,28 +63,26 @@ const ListPropertyPage = () => {
   const formik = useFormik<{
     name: string;
     description: string;
-    address: string;
-    year: string;
-    surface: number;
-    totalSurface: number;
-    floor: number | null;
-    nbRooms: number;
-    nbBedrooms: number;
-    nbBathrooms: number;
+    city: string;
+    propertyAddress: string;
+    rooms: number;
+    bathrooms: number;
+    usableArea: number;
+    totalArea: number;
+    yearOfConstruction: number;
   }>({
     initialValues: {
       name: '',
       description: '',
-      address: '',
-      year: '',
-      surface: 0,
-      totalSurface: 0,
-      floor: null,
-      nbRooms: 0,
-      nbBedrooms: 0,
-      nbBathrooms: 0,
+      city: '',
+      propertyAddress: '',
+      rooms: 0,
+      bathrooms: 0,
+      usableArea: 0,
+      totalArea: 0,
+      yearOfConstruction: 0,
     },
-    onSubmit: async (values) => {
+    onSubmit: async ({ name, description, ...propertyValues }) => {
       if (image == null || documents.length === 0) {
         toast('Please upload image and/or documents', { type: 'error' });
         return;
@@ -100,96 +98,88 @@ const ListPropertyPage = () => {
           ...documents,
         ]);
 
-        setStatusMessage('Creating JSON object');
+        setStatusMessage('Creating property...');
 
-        const json = JSON.stringify({
-          name: values.name,
-          description: values.description,
-          image: `ipfs://${photoHash}`,
-          attributes: [
-            { trait_type: 'address', value: values.address },
-            { display_type: 'number', trait_type: 'Year', value: values.year },
-            {
-              display_type: 'number',
-              trait_type: 'Surface',
-              value: values.surface,
-            },
-            {
-              display_type: 'number',
-              trait_type: 'TotalSurface',
-              value: values.totalSurface,
-            },
-            {
-              display_type: 'number',
-              trait_type: 'TotalSurface',
-              value: values.totalSurface,
-            },
-            {
-              display_type: 'number',
-              trait_type: 'Floor',
-              value: values.floor,
-            },
-            {
-              display_type: 'number',
-              trait_type: 'Nb of rooms',
-              value: values.nbRooms,
-            },
-            {
-              display_type: 'number',
-              trait_type: 'Nb of bedrooms',
-              value: values.nbBedrooms,
-            },
-            {
-              display_type: 'number',
-              trait_type: 'Nb of bathrooms',
-              value: values.nbBathrooms,
-            },
-            ...documentsHash.map((docHash) => ({
-              display_type: 'url',
-              trait_type: 'Document',
-              value: `ipfs://${docHash}`,
-            })),
-          ],
-        });
+        if (realEstate != null && account != null) {
+          const transaction = await realEstate
+            .connect(account)
+            .createProperty(
+              propertyValues.city,
+              propertyValues.propertyAddress,
+              propertyValues.rooms,
+              propertyValues.bathrooms,
+              propertyValues.usableArea,
+              propertyValues.totalArea,
+              propertyValues.yearOfConstruction,
+            );
 
-        setStatusMessage('Uploading data to IPFS');
-
-        const response = await axios.post(
-          'https://api.pinata.cloud/pinning/pinJSONToIPFS',
-          json,
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        );
-
-        const ipfsHash: string = response.data.IpfsHash;
-
-        formik.resetForm();
-        imageUploaderRef.current?.clearFiles();
-        documentsUploaderRef.current?.clearFiles();
-
-        if (realEstate) {
-          setIsLoading(false);
           setIsProccessing(true);
 
-          setStatusMessage('Proccessing token NFT... this might take a while!');
+          setStatusMessage('Creating property NFT...');
 
-          const transaction: TransactionResponse =
-            await realEstate.createTokenURI(`ipfs://${ipfsHash}`);
+          await transaction.wait();
 
-          const transactionResult: TransactionReceipt | null =
-            await transaction.wait();
+          try {
+            const filter = await realEstate.filters['PropertyCreated(uint256)'];
 
-          setIsProccessing(false);
+            const propertyId = (await realEstate.queryFilter(filter))[0]
+              .args[0];
 
-          if (transactionResult) {
-            setRefetchOwnedTokens(true);
-            toast(`Real estate NFT deploy to ${transactionResult.to}`, {
-              type: 'success',
+            const property = await realEstate
+              .connect(account)
+              .getOwnedPropertyById(propertyId);
+
+            if (property) {
+              const json = JSON.stringify({
+                name,
+                description,
+                image: `ipfs://${photoHash}`,
+                ...mapObjectToIpfsAttribute(propertyValues),
+                ...documentsHash.map((docHash) => ({
+                  display_type: 'url',
+                  trait_type: 'propertyDocument',
+                  value: `ipfs://${docHash}`,
+                })),
+              });
+
+              setStatusMessage('Uploading property JSON to IPFS...');
+
+              const response = await axios.post(
+                'https://api.pinata.cloud/pinning/pinJSONToIPFS',
+                json,
+                {
+                  headers: {
+                    Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+                    'Content-Type': 'application/json',
+                  },
+                },
+              );
+
+              const ipfsHash: string = response.data.IpfsHash;
+
+              const transaction = await realEstate.createTokenURI(
+                `ipfs://${ipfsHash}`,
+                propertyId,
+              );
+
+              const transactionResult = await transaction.wait();
+
+              setIsProccessing(false);
+
+              if (transactionResult) {
+                setRefetchOwnedTokens(true);
+                toast(`Real estate NFT deploy to ${transactionResult.to}`, {
+                  type: 'success',
+                });
+              }
+            }
+          } catch (err: any) {
+            toast(`Something went wrong ${err?.message ?? err}`, {
+              type: 'error',
             });
+            console.error(err);
+            setIsLoading(false);
+            setIsProccessing(false);
           }
         }
       } catch (err: any) {
@@ -207,6 +197,9 @@ const ListPropertyPage = () => {
       if (realEstate && account) {
         try {
           const tokens = await realEstate.getOwnedTokens(account);
+
+          console.log(tokens);
+
           const tokenURIs = await Promise.all(
             tokens.map((token) => realEstate.tokenURI(token)),
           );
@@ -278,12 +271,12 @@ const ListPropertyPage = () => {
         {isLoading || isProccessing ? (
           <div className="flex flex-col items-center gap-2">
             <p
-              className={`${isLoading ? 'text-green-600' : 'text-yellow-600'} text-lg font-semibold italic`}
+              className={`${isLoading ? 'text-green-600' : 'text-green-700'} text-lg font-semibold italic`}
             >
               {statusMessage}
             </p>
             <Progress
-              color={isLoading ? 'success' : 'warning'}
+              color="success"
               size="sm"
               isIndeterminate
               aria-label={statusMessage}
@@ -318,73 +311,60 @@ const ListPropertyPage = () => {
             onChange={formik.handleChange}
           />
           <Input
-            name="address"
+            name="propertyAddress"
             label="Address"
             type="string"
             required
             isRequired
-            value={formik.values.address}
+            value={formik.values.propertyAddress}
             onChange={formik.handleChange}
           />
           <Input
-            name="year"
-            label="Year built"
-            type="string"
-            required
-            isRequired
-            value={formik.values.year}
-            onChange={formik.handleChange}
-          />
-          <Input
-            name="surface"
-            label="Surface (m2)"
+            name="rooms"
+            label="Number of rooms"
             type="number"
             required
             isRequired
-            value={formik.values.surface.toString()}
+            value={formik.values.rooms.toString()}
             onChange={formik.handleChange}
           />
           <Input
-            name="totalSurface"
-            label="Total surface (m2)"
+            name="bathrooms"
+            label="Number of bathrooms"
             type="number"
             required
             isRequired
-            value={formik.values.totalSurface.toString()}
+            value={formik.values.bathrooms.toString()}
             onChange={formik.handleChange}
           />
           <Input
-            name="floor"
-            label="Floor"
+            name="usableArea"
+            label="Usable area (m2)"
             type="number"
             required
             isRequired
-            value={formik.values.floor?.toString()}
+            value={formik.values.usableArea.toString()}
             onChange={formik.handleChange}
           />
           <Input
-            name="nbRooms"
-            label="Nb of rooms"
+            name="totalArea"
+            label="Total area (m2)"
             type="number"
             required
             isRequired
-            value={formik.values.nbRooms.toString()}
+            value={formik.values.totalArea.toString()}
             onChange={formik.handleChange}
           />
           <Input
-            name="nbBedrooms"
-            label="Nb of bedrooms"
+            name="yearOfConstruction"
+            label="Year of construction"
             type="number"
-            value={formik.values.nbBedrooms.toString()}
+            required
+            isRequired
+            value={formik.values.yearOfConstruction.toString()}
             onChange={formik.handleChange}
           />
-          <Input
-            name="nbBathrooms"
-            label="Nb of bathrooms"
-            type="number"
-            value={formik.values.nbBathrooms.toString()}
-            onChange={formik.handleChange}
-          />
+
           <div className="col-span-2">
             <p className="mb-2 ml-2 text-sm text-gray-700">Upload NFT image</p>
             <ImageUploader
