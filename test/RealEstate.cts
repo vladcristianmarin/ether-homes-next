@@ -14,29 +14,48 @@ const createTestProperty = async (
   realEstate: RealEstate,
   caller: ContractRunner,
 ) => {
-  const transaction = await realEstate
+  let transaction: any = await realEstate
     .connect(caller)
-    .createProperty('Bucuresti', 'Str Sandulesti 7', 4, 1, 59, 62, 1992);
+    .createProperty(
+      'Bucuresti',
+      'Str Sandulesti 7',
+      4,
+      1,
+      59,
+      62,
+      1992,
+      ['docs'],
+      ['images'],
+    );
 
-  await transaction.wait();
+  transaction = await transaction.wait();
 
   const filter = realEstate.filters['PropertyCreated(uint256)'];
   const propertyId = (await realEstate.queryFilter(filter))[0].args[0];
 
-  const property = await realEstate
+  const property: RealEstate.PropertyStruct = await realEstate
     .connect(caller)
-    .getOwnedPropertyById(propertyId);
+    .getCreatedPropertyById(propertyId);
+
+  const provider = ethers.provider;
+
+  const receipt = await provider.getTransactionReceipt(transaction.hash);
+
+  if (receipt != null && receipt.logs.length > 0) {
+    const parsedLogs = realEstate.interface.parseLog(receipt.logs[0]);
+  }
 };
 
 describe('RealEstate', () => {
   let realEstate: RealEstate;
   let dApp: HardhatEthersSigner;
   let seller: HardhatEthersSigner;
+  let inspector: HardhatEthersSigner;
 
   beforeEach(async () => {
-    [dApp, seller] = await ethers.getSigners();
+    [dApp, seller, inspector] = await ethers.getSigners();
     const RealEstate = await ethers.getContractFactory('RealEstate');
-    realEstate = await RealEstate.deploy();
+    realEstate = await RealEstate.deploy([inspector]);
     await realEstate.waitForDeployment();
   });
 
@@ -48,15 +67,37 @@ describe('RealEstate', () => {
   it('should create property', async () => {
     await createTestProperty(realEstate, seller);
 
-    const myProperties = await realEstate.connect(seller).getOwnedProperties();
+    const myProperties = await realEstate
+      .connect(seller)
+      .getCreatedProperties();
 
     expect(myProperties[0].id).to.be.equal(0);
+  });
+
+  it('should update property', async () => {
+    await createTestProperty(realEstate, seller);
+
+    const transaction = await realEstate
+      .connect(inspector)
+      .verifyProperty(seller, 0);
+
+    await transaction.wait();
+
+    const property = await realEstate.connect(seller).getCreatedPropertyById(0);
+
+    expect(property.verified).to.be.equal(true);
   });
 
   it('should mint an initial NFT', async () => {
     await createTestProperty(realEstate, seller);
 
-    const transaction = await realEstate
+    let transaction = await realEstate
+      .connect(inspector)
+      .verifyProperty(seller, 0);
+
+    await transaction.wait();
+
+    transaction = await realEstate
       .connect(seller)
       .createTokenURI(TEST_IPFS[0], 0);
     await transaction.wait();
@@ -70,6 +111,12 @@ describe('RealEstate', () => {
     await createTestProperty(realEstate, seller);
 
     let transaction = await realEstate
+      .connect(inspector)
+      .verifyProperty(seller, 0);
+
+    await transaction.wait();
+
+    transaction = await realEstate
       .connect(seller)
       .createTokenURI(TEST_IPFS[0], 0);
     await transaction.wait();
@@ -87,7 +134,13 @@ describe('RealEstate', () => {
   it('should return address minted tokens', async () => {
     await createTestProperty(realEstate, seller);
 
-    const transaction = await realEstate
+    let transaction = await realEstate
+      .connect(inspector)
+      .verifyProperty(seller, 0);
+
+    await transaction.wait();
+
+    transaction = await realEstate
       .connect(seller)
       .createTokenURI(TEST_IPFS[0], 0);
     await transaction.wait();
@@ -97,12 +150,32 @@ describe('RealEstate', () => {
     expect(ownedTokens[0]).to.be.equal('0');
   });
 
-  it('should return all properties', async () => {
+  it('should return assigned contracts for inspector', async () => {
     await createTestProperty(realEstate, seller);
-    await createTestProperty(realEstate, seller);
+    let uninspectedProperties = await realEstate
+      .connect(inspector)
+      .getUninspectedProperties();
 
-    const allProperties = await realEstate.getAllProperties();
+    const initLength = uninspectedProperties.length;
 
-    expect(allProperties.length).to.be.equal(2);
+    const transaction = await realEstate
+      .connect(inspector)
+      .verifyProperty(seller, 0);
+
+    await transaction.wait();
+
+    uninspectedProperties = await realEstate
+      .connect(inspector)
+      .getUninspectedProperties();
+
+    const finalLength = uninspectedProperties.length;
+
+    const allAssigned = await realEstate
+      .connect(inspector)
+      .getAssignedProperties();
+
+    expect(initLength).to.be.equal(1);
+    expect(finalLength).to.be.equal(0);
+    expect(allAssigned.length).to.be.equal(1);
   });
 });
