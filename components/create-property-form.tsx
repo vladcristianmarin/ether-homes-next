@@ -1,4 +1,4 @@
-import { Button, Chip, Input, Tooltip } from '@nextui-org/react';
+import { Button, Chip, Input, Link, Spinner, Tooltip } from '@nextui-org/react';
 import { useFormik } from 'formik';
 import * as React from 'react';
 import { useState } from 'react';
@@ -71,6 +71,76 @@ const PropertySchema = Yup.object({
     }),
 });
 
+interface IMultiInputProps {
+  name: 'documentsUris' | 'imagesUris';
+  label: string;
+  value: string;
+  values: string[];
+  isInvalid?: boolean;
+  errorMessage?: string | string[];
+  onClose?: (
+    field: 'documentsUris' | 'imagesUris',
+    valueToDelete: string,
+  ) => void;
+  onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement> &
+    ((e: KeyboardEvent) => void);
+  onBlur?: React.FocusEventHandler<HTMLInputElement> &
+    ((e: React.FocusEvent<Element, Element>) => void);
+}
+
+const MultiInput: React.FC<IMultiInputProps> = ({
+  name,
+  label,
+  value,
+  values,
+  isInvalid,
+  errorMessage,
+  onClose,
+  onChange,
+  onKeyDown,
+  onBlur,
+}) => {
+  return (
+    <div className="flex flex-col justify-start gap-2">
+      <div
+        className={`${values.length === 0 && 'hidden'}
+      flex flex-row flex-wrap items-center justify-start gap-2
+      `}
+      >
+        {values.map((item, index) => (
+          <Chip
+            variant="bordered"
+            color="primary"
+            key={index}
+            isCloseable
+            onClose={() => onClose?.(name, item)}
+          >
+            <Tooltip content={item} delay={500} size="sm">
+              <Link href={item} isExternal showAnchorIcon>
+                {item.length > 14
+                  ? `${item.slice(0, 14)}...${item.slice(item.length - 4, -1)}`
+                  : item}
+              </Link>
+            </Tooltip>
+          </Chip>
+        ))}
+      </div>
+
+      <Input
+        name={name}
+        label={label}
+        value={value}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        onBlur={onBlur}
+        isInvalid={isInvalid}
+        errorMessage={errorMessage}
+      />
+    </div>
+  );
+};
+
 export interface ICreatePropertyFormProps {}
 
 export function CreatePropertyForm(props: ICreatePropertyFormProps) {
@@ -86,9 +156,7 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
       usableArea: '',
       totalArea: '',
       yearOfConstruction: '',
-      documentsUris: [
-        'https://gray-worthwhile-hornet-806.mypinata.cloud/ipfs/QmeEz83Ewh4xTMoF4ckffyHfvQs5CqRqh4sj9SjeQGUgZn',
-      ],
+      documentsUris: [],
       imagesUris: [],
     },
     validationSchema: PropertySchema,
@@ -118,11 +186,18 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
               type: 'error',
             });
           }
+          formik.resetForm();
         } catch (e: any) {
-          toast('Something went wrong, transaction reverted', {
-            type: 'error',
-          });
-          console.error(e);
+          if (e.reason === 'rejected') {
+            toast('You rejected transaction', {
+              type: 'warning',
+            });
+          } else {
+            toast('Something went wrong, transaction reverted', {
+              type: 'error',
+            });
+            console.error(e);
+          }
         }
       }
     },
@@ -155,6 +230,21 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
     );
   };
 
+  const handleBlurUrl = (
+    field: 'documentsUris' | 'imagesUris',
+    e: React.FocusEvent<Element, Element>,
+  ) => {
+    formik.handleBlur(e);
+
+    const value = field === 'documentsUris' ? documentUri : imageUri;
+
+    if (value.trim()) {
+      formik.setFieldValue(field, [...formik.values[field], value]).then(() => {
+        field === 'documentsUris' ? setDocumentUri('') : setImageUri('');
+      });
+    }
+  };
+
   return (
     <div>
       <div className="mb-4 flex w-full flex-1 items-center justify-between">
@@ -166,12 +256,12 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
             formik.isSubmitting ? 'Proccessing transaction' : 'Clear form'
           }
           offset={15}
-          delay={1000}
+          delay={500}
         >
           <Button
             isIconOnly
             aria-label="Reset"
-            variant="flat"
+            variant="light"
             onPress={formik.handleReset}
             isLoading={formik.isSubmitting}
           >
@@ -255,74 +345,53 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
           }
         />
         <div className="col-span-2">
-          <div className="mb-2 flex flex-row flex-wrap items-center gap-2">
-            {formik.values.documentsUris.map((item, index) => (
-              <Chip
-                variant="bordered"
-                color="primary"
-                key={index}
-                isCloseable
-                onClose={() => {
-                  handleDeleteValue('documentsUris', item);
-                }}
-              >
-                {item}
-              </Chip>
-            ))}
-          </div>
-
-          <Input
+          <MultiInput
             name="documentsUris"
-            label="Documents URIs"
+            label="Documents URI(s)"
             value={documentUri}
-            onChange={(e) => setDocumentUri(e.target.value)}
-            onKeyDown={(e) => handleConfirmUri('documentsUris', e)}
-            onBlur={formik.handleBlur}
+            values={formik.values.documentsUris}
             isInvalid={Boolean(
               formik.touched.documentsUris && formik.errors.documentsUris,
             )}
             errorMessage={
               formik.touched.documentsUris ? formik.errors.documentsUris : ''
             }
+            onChange={(e) => setDocumentUri(e.target.value)}
+            onKeyDown={(e) => handleConfirmUri('documentsUris', e)}
+            onBlur={(e) => handleBlurUrl('documentsUris', e)}
+            onClose={handleDeleteValue}
           />
         </div>
         <div className="col-span-2">
-          <div className="mb-2 flex flex-row flex-wrap items-center gap-2">
-            {formik.values.imagesUris.map((item, index) => (
-              <Chip
-                variant="bordered"
-                color="primary"
-                key={index}
-                isCloseable
-                onClose={() => {
-                  handleDeleteValue('imagesUris', item);
-                }}
-              >
-                {item}
-              </Chip>
-            ))}
-          </div>
-
-          <Input
+          <MultiInput
             name="imagesUris"
-            label="Images URIs"
+            label="Images URI(s)"
             value={imageUri}
-            onChange={(e) => setImageUri(e.target.value)}
-            onKeyDown={(e) => handleConfirmUri('imagesUris', e)}
-            onBlur={formik.handleBlur}
+            values={formik.values.imagesUris}
             isInvalid={Boolean(
               formik.touched.imagesUris && formik.errors.imagesUris,
             )}
             errorMessage={
               formik.touched.imagesUris ? formik.errors.imagesUris : ''
             }
+            onChange={(e) => setImageUri(e.target.value)}
+            onKeyDown={(e) => handleConfirmUri('imagesUris', e)}
+            onBlur={(e) => handleBlurUrl('imagesUris', e)}
+            onClose={handleDeleteValue}
           />
         </div>
+
         <Button
           type="submit"
           className="col-span-2"
           color="primary"
-          endContent={<FaUpload />}
+          endContent={
+            formik.isSubmitting ? (
+              <Spinner size="sm" color="white" />
+            ) : (
+              <FaUpload />
+            )
+          }
         >
           {formik.isSubmitting ? 'Proccessing...' : 'Upload'}
         </Button>

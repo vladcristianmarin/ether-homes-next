@@ -6,11 +6,13 @@ const path = require('path');
 const { ethers } = require('hardhat');
 
 async function main() {
-  const [dApp] = await ethers.getSigners();
+  const [dApp, _seller, _buyer, inspector] = await ethers.getSigners();
 
   // Deploy RealEstate NFT contract
   const RealEstateFactory = await ethers.getContractFactory('RealEstate');
-  const realEstate: RealEstate = await RealEstateFactory.connect(dApp).deploy();
+  const realEstate: RealEstate = await RealEstateFactory.connect(dApp).deploy([
+    inspector,
+  ]);
   await realEstate.waitForDeployment();
 
   console.log(

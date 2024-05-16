@@ -29,21 +29,6 @@ const createTestProperty = async (
     );
 
   transaction = await transaction.wait();
-
-  const filter = realEstate.filters['PropertyCreated(uint256)'];
-  const propertyId = (await realEstate.queryFilter(filter))[0].args[0];
-
-  const property: RealEstate.PropertyStruct = await realEstate
-    .connect(caller)
-    .getCreatedPropertyById(propertyId);
-
-  const provider = ethers.provider;
-
-  const receipt = await provider.getTransactionReceipt(transaction.hash);
-
-  if (receipt != null && receipt.logs.length > 0) {
-    const parsedLogs = realEstate.interface.parseLog(receipt.logs[0]);
-  }
 };
 
 describe('RealEstate', () => {

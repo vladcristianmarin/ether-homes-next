@@ -1,7 +1,13 @@
 {
   "abi": [
     {
-      "inputs": [],
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "_inspectors",
+          "type": "address[]"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "constructor"
     },
@@ -235,10 +241,87 @@
       "anonymous": false,
       "inputs": [
         {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "city",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "propertAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "bathrooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "usableArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "yearOfConstruction",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "propertyInspector",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "verified",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "string[]",
+              "name": "documentsUris",
+              "type": "string[]"
+            },
+            {
+              "internalType": "string[]",
+              "name": "imagesUris",
+              "type": "string[]"
+            }
+          ],
           "indexed": false,
-          "internalType": "uint256",
-          "name": "propertyId",
-          "type": "uint256"
+          "internalType": "struct RealEstate.Property",
+          "name": "property",
+          "type": "tuple"
         }
       ],
       "name": "PropertyCreated",
@@ -342,6 +425,16 @@
           "internalType": "uint256",
           "name": "_yearOfConstruction",
           "type": "uint256"
+        },
+        {
+          "internalType": "string[]",
+          "name": "_documentsUris",
+          "type": "string[]"
+        },
+        {
+          "internalType": "string[]",
+          "name": "_imagesUris",
+          "type": "string[]"
         }
       ],
       "name": "createProperty",
@@ -380,71 +473,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "getAllProperties",
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "uint256",
-              "name": "id",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "internalType": "string",
-              "name": "city",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "propertAddress",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "rooms",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "bathrooms",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "usableArea",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "totalArea",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "yearOfConstruction",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "createdAt",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct RealEstate.Property[]",
-          "name": "",
-          "type": "tuple[]"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -465,7 +493,7 @@
     },
     {
       "inputs": [],
-      "name": "getOwnedProperties",
+      "name": "getAssignedProperties",
       "outputs": [
         {
           "components": [
@@ -518,6 +546,121 @@
               "internalType": "uint256",
               "name": "createdAt",
               "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "propertyInspector",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "verified",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "string[]",
+              "name": "documentsUris",
+              "type": "string[]"
+            },
+            {
+              "internalType": "string[]",
+              "name": "imagesUris",
+              "type": "string[]"
+            }
+          ],
+          "internalType": "struct RealEstate.Property[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getCreatedProperties",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "city",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "propertAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "bathrooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "usableArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "yearOfConstruction",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "propertyInspector",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "verified",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "string[]",
+              "name": "documentsUris",
+              "type": "string[]"
+            },
+            {
+              "internalType": "string[]",
+              "name": "imagesUris",
+              "type": "string[]"
             }
           ],
           "internalType": "struct RealEstate.Property[]",
@@ -536,7 +679,7 @@
           "type": "uint256"
         }
       ],
-      "name": "getOwnedPropertyById",
+      "name": "getCreatedPropertyById",
       "outputs": [
         {
           "components": [
@@ -589,6 +732,31 @@
               "internalType": "uint256",
               "name": "createdAt",
               "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "propertyInspector",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "verified",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "string[]",
+              "name": "documentsUris",
+              "type": "string[]"
+            },
+            {
+              "internalType": "string[]",
+              "name": "imagesUris",
+              "type": "string[]"
             }
           ],
           "internalType": "struct RealEstate.Property",
@@ -632,6 +800,216 @@
           "internalType": "address[]",
           "name": "",
           "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "startIndex",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_batchSize",
+          "type": "uint256"
+        }
+      ],
+      "name": "getPropertiesBatch",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "city",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "propertAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "bathrooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "usableArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "yearOfConstruction",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "propertyInspector",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "verified",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "string[]",
+              "name": "documentsUris",
+              "type": "string[]"
+            },
+            {
+              "internalType": "string[]",
+              "name": "imagesUris",
+              "type": "string[]"
+            }
+          ],
+          "internalType": "struct RealEstate.Property[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getUninspectedProperties",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "id",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "city",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "propertAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "rooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "bathrooms",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "usableArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalArea",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "yearOfConstruction",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "createdAt",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "propertyInspector",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "verified",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "string[]",
+              "name": "documentsUris",
+              "type": "string[]"
+            },
+            {
+              "internalType": "string[]",
+              "name": "imagesUris",
+              "type": "string[]"
+            }
+          ],
+          "internalType": "struct RealEstate.Property[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "inspectors",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -886,7 +1264,25 @@
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "propertyOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "propertyId",
+          "type": "uint256"
+        }
+      ],
+      "name": "verifyProperty",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
     }
   ],
-  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
 }

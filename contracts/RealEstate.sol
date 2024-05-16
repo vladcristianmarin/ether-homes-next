@@ -84,7 +84,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
     inspectors = _inspectors;
   }
 
-  event PropertyCreated(uint256 propertyId);
+  event PropertyCreated(Property property);
 
   function createProperty(
     string memory _city,
@@ -130,7 +130,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
     createdPropertiesIds[msg.sender].push(propertyId);
     propertiesCount++;
 
-    emit PropertyCreated(propertyId);
+    emit PropertyCreated(newProperty);
 
     return propertyId;
   }
