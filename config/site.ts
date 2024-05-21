@@ -8,6 +8,10 @@ export const siteConfig = {
       label: 'Tokenize property',
       href: '/tokenize',
     },
+    {
+      label: 'Inspector dashboard',
+      href: '/inspector-dashboard',
+    },
   ],
   navMenuItems: [],
   links: {},

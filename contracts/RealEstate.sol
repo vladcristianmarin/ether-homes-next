@@ -311,6 +311,16 @@ contract RealEstate is ERC721URIStorage, Ownable {
     return uninspectedProperties;
   }
 
+  function isInspector() public view returns (bool) {
+    for (uint256 i = 0; i < inspectors.length; i++) {
+      if (msg.sender == inspectors[i]) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   function verifyProperty(
     address propertyOwner,
     uint256 propertyId

@@ -1,4 +1,8 @@
 /* eslint-disable no-prototype-builtins */
+
+import type { BigNumberish } from 'ethers';
+import moment from 'moment';
+
 /* eslint-disable no-restricted-syntax */
 function mapObjectToIpfsAttribute(obj: Record<any, any>) {
   const result = [];
@@ -17,3 +21,7 @@ function mapObjectToIpfsAttribute(obj: Record<any, any>) {
 }
 
 export { mapObjectToIpfsAttribute };
+
+export function bigNumberToDate(bigN: BigNumberish) {
+  return moment(Number(bigN.toString()) * 1000).format('DD.MM.YYYY HH:mm');
+}

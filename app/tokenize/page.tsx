@@ -22,6 +22,7 @@ import { CreatePropertyForm } from '@/components/create-property-form';
 import { useContracts } from '@/context/contracts-context';
 import { useWallet } from '@/context/wallet-context';
 import type { RealEstate } from '@/typechain-types';
+import { bigNumberToDate } from '@/utils';
 
 const TokenizePage: NextPage = () => {
   const { account } = useWallet();
@@ -48,12 +49,11 @@ const TokenizePage: NextPage = () => {
     if (realEstate && account) {
       realEstate
         .connect(account)
-        .on(realEstate.getEvent('PropertyCreated'), (property) => {
-          console.log('proerty created');
-          setProperties((prev) => [...prev, property]);
+        .on(realEstate.getEvent('PropertyCreated'), async () => {
+          await load();
         });
     }
-  }, [account, realEstate]);
+  }, [account, load, realEstate]);
 
   return (
     <div className="grid min-h-max w-full grid-cols-9 gap-4">
@@ -117,7 +117,7 @@ const TokenizePage: NextPage = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <p>{property.createdAt.toString()}</p>
+                    <p>{bigNumberToDate(property.createdAt)}</p>
                   </TableCell>
                 </TableRow>
               ))}

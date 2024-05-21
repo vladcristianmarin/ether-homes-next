@@ -10,6 +10,8 @@ import { useWallet } from './wallet-context';
 interface IContractsContext {
   realEstateAddress: string | undefined;
   realEstate: RealEstate | undefined;
+  isInspector: boolean;
+  loadingInspectorStatus: boolean | undefined;
 }
 
 const ContractsContext = createContext<IContractsContext>(
@@ -23,6 +25,9 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
 
   const [realEstate, setRealEstate] = useState<RealEstate>();
   const [realEstateAddress, setRealEstateAddress] = useState<string>();
+  const [isInspector, setIsInspector] = useState<boolean>(false);
+  const [loadingInspectorStatus, setLoadingInspectorStatus] =
+    useState<boolean>();
 
   useEffect(() => {
     const createRealEstateContract = async () => {
@@ -46,9 +51,27 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
     createRealEstateContract().then().catch();
   }, [account]);
 
+  useEffect(() => {
+    const isInspector = async () => {
+      setLoadingInspectorStatus(true);
+      if (account != null && realEstate != null) {
+        const result = await realEstate.connect(account).isInspector();
+        setIsInspector(result);
+      }
+      setLoadingInspectorStatus(false);
+    };
+
+    isInspector().then().catch();
+  }, [account, realEstate]);
+
   const contextValue = useMemo(
-    () => ({ realEstate, realEstateAddress }),
-    [realEstate, realEstateAddress],
+    () => ({
+      realEstate,
+      realEstateAddress,
+      isInspector,
+      loadingInspectorStatus,
+    }),
+    [isInspector, loadingInspectorStatus, realEstate, realEstateAddress],
   );
 
   return (

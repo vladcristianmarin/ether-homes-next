@@ -13,9 +13,11 @@ import NextLink from 'next/link';
 
 import { ThemeSwitch } from '@/components/theme-switch';
 import { siteConfig } from '@/config/site';
+import { useContracts } from '@/context/contracts-context';
 
 export const Navbar = () => {
   const { isConnected } = useWeb3ModalAccount();
+  const { isInspector } = useContracts();
 
   return (
     <NextUINavbar maxWidth="xl" position="sticky" shouldHideOnScroll isBordered>
@@ -26,20 +28,26 @@ export const Navbar = () => {
           </NextLink>
         </NavbarBrand>
         <ul className="ml-2 flex justify-start gap-4">
-          {siteConfig.navItems.map((item) => (
-            <NavbarItem key={item.href}>
-              <NextLink
-                className={clsx(
-                  linkStyles({ color: 'foreground' }),
-                  'data-[active=true]:font-medium data-[active=true]:text-primary',
-                )}
-                color="foreground"
-                href={item.href}
-              >
-                {item.label}
-              </NextLink>
-            </NavbarItem>
-          ))}
+          {siteConfig.navItems.map((item) => {
+            if (item.href === '/inspector-dashboard' && !isInspector) {
+              return null;
+            }
+
+            return (
+              <NavbarItem key={item.href}>
+                <NextLink
+                  className={clsx(
+                    linkStyles({ color: 'foreground' }),
+                    'data-[active=true]:font-medium data-[active=true]:text-primary',
+                  )}
+                  color="foreground"
+                  href={item.href}
+                >
+                  {item.label}
+                </NextLink>
+              </NavbarItem>
+            );
+          })}
         </ul>
       </NavbarContent>
 
