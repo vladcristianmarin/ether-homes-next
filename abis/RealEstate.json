@@ -308,6 +308,11 @@
               "type": "bool"
             },
             {
+              "internalType": "string",
+              "name": "ipfsFile",
+              "type": "string"
+            },
+            {
               "internalType": "string[]",
               "name": "documentsUris",
               "type": "string[]"
@@ -366,6 +371,29 @@
         }
       ],
       "name": "approve",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "propertyOwner",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "propertyId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "ipfsFile",
+          "type": "string"
+        }
+      ],
+      "name": "assignIpfsFile",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -450,11 +478,6 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "string",
-          "name": "tokenURI",
-          "type": "string"
-        },
         {
           "internalType": "uint256",
           "name": "propertyId",
@@ -563,6 +586,11 @@
               "type": "bool"
             },
             {
+              "internalType": "string",
+              "name": "ipfsFile",
+              "type": "string"
+            },
+            {
               "internalType": "string[]",
               "name": "documentsUris",
               "type": "string[]"
@@ -651,6 +679,11 @@
               "internalType": "bool",
               "name": "isTokenized",
               "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsFile",
+              "type": "string"
             },
             {
               "internalType": "string[]",
@@ -747,6 +780,11 @@
               "internalType": "bool",
               "name": "isTokenized",
               "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsFile",
+              "type": "string"
             },
             {
               "internalType": "string[]",
@@ -888,6 +926,11 @@
               "type": "bool"
             },
             {
+              "internalType": "string",
+              "name": "ipfsFile",
+              "type": "string"
+            },
+            {
               "internalType": "string[]",
               "name": "documentsUris",
               "type": "string[]"
@@ -976,6 +1019,11 @@
               "internalType": "bool",
               "name": "isTokenized",
               "type": "bool"
+            },
+            {
+              "internalType": "string",
+              "name": "ipfsFile",
+              "type": "string"
             },
             {
               "internalType": "string[]",
@@ -1297,5 +1345,5 @@
       "type": "function"
     }
   ],
-  "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 }

@@ -16,13 +16,14 @@ import {
   Tooltip,
   useDisclosure,
 } from '@nextui-org/react';
+import axios from 'axios';
 import { useState } from 'react';
-import { FaCheck, FaEye } from 'react-icons/fa6';
+import { FaCheck, FaEye, FaFile } from 'react-icons/fa6';
 import { toast } from 'react-toastify';
 
 import { useContracts } from '@/context/contracts-context';
 import type { RealEstate } from '@/typechain-types';
-import { bigNumberToDate } from '@/utils';
+import { bigNumberToDate, createPropertyJSON } from '@/utils';
 
 interface IInspectorUnverifiedPropertyProps {
   properties: RealEstate.PropertyStruct[];
@@ -43,6 +44,38 @@ const InspectorUnverifiedPropertyTable: React.FunctionComponent<
   const handleViewProperty = (property: RealEstate.PropertyStruct) => {
     setSelectedProperty(property);
     onOpen();
+  };
+
+  const handleCreateIPFS = async (property: RealEstate.PropertyStruct) => {
+    const propertyJSON = createPropertyJSON(property);
+
+    try {
+      const response = await axios.post(
+        'https://api.pinata.cloud/pinning/pinJSONToIPFS',
+        propertyJSON,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const ipfsURI = response.data.IpfsHash;
+
+      await realEstate?.assignIpfsFile(
+        property.owner,
+        property.id,
+        `ipfs://${ipfsURI}`,
+      );
+      toast('Successfully created and assigned IPFS file', {
+        type: 'success',
+        autoClose: 500,
+      });
+    } catch (e: any) {
+      toast('Something went wrong!', { type: 'error' });
+      console.error(e);
+    }
   };
 
   const handleApprove = async () => {
@@ -118,6 +151,34 @@ const InspectorUnverifiedPropertyTable: React.FunctionComponent<
                       onPress={() => handleViewProperty(property)}
                     >
                       <FaEye />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip
+                    content={
+                      property.ipfsFile.length === 0
+                        ? 'Create IPFS file'
+                        : 'View IPFS file'
+                    }
+                    delay={200}
+                  >
+                    <Button
+                      isIconOnly
+                      aria-label="Create File"
+                      variant="light"
+                      className="cursor-pointer text-lg text-default-400 active:opacity-50"
+                      onPress={() => {
+                        if (property.ipfsFile.length === 0) {
+                          handleCreateIPFS(property);
+                        } else {
+                          window.open(
+                            property.ipfsFile,
+                            '_blank',
+                            'noopener,noreferrer',
+                          );
+                        }
+                      }}
+                    >
+                      <FaFile />
                     </Button>
                   </Tooltip>
                 </div>

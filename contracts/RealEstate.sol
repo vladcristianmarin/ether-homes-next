@@ -20,6 +20,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
     address propertyInspector;
     bool verified;
     bool isTokenized;
+    string ipfsFile;
     string[] documentsUris;
     string[] imagesUris;
   }
@@ -114,6 +115,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
       inspectors[pseudoRandomInspectorId],
       false,
       false,
+      '',
       _documentsUris,
       _imagesUris
     );
@@ -136,7 +138,6 @@ contract RealEstate is ERC721URIStorage, Ownable {
   }
 
   function createTokenURI(
-    string memory tokenURI,
     uint256 propertyId
   )
     public
@@ -147,7 +148,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
     uint256 tokenId = _nextTokenId++;
 
     _mint(msg.sender, tokenId);
-    _setTokenURI(tokenId, tokenURI);
+    _setTokenURI(tokenId, properties[msg.sender][propertyId].ipfsFile);
 
     tokenMinted[tokenId] = true;
     tokenIdToPropertyId[tokenId] = propertyId;
@@ -321,6 +322,23 @@ contract RealEstate is ERC721URIStorage, Ownable {
     return false;
   }
 
+  function assignIpfsFile(
+    address propertyOwner,
+    uint256 propertyId,
+    string memory ipfsFile
+  ) public _onlyInspector(msg.sender) {
+    Property memory property = properties[propertyOwner][propertyId];
+
+    require(
+      property.owner != 0x0000000000000000000000000000000000000000,
+      'Property was not found!'
+    );
+
+    require(bytes(property.ipfsFile).length == 0, 'IPFS file already exists');
+
+    properties[propertyOwner][propertyId].ipfsFile = ipfsFile;
+  }
+
   function verifyProperty(
     address propertyOwner,
     uint256 propertyId
@@ -330,6 +348,11 @@ contract RealEstate is ERC721URIStorage, Ownable {
     require(
       property.owner != 0x0000000000000000000000000000000000000000,
       'Property was not found!'
+    );
+
+    require(
+      bytes(property.ipfsFile).length != 0,
+      'Please generate IPFS file before approval'
     );
 
     properties[propertyOwner][propertyId].verified = true;
