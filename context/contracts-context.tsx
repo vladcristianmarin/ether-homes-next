@@ -53,12 +53,12 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
 
   useEffect(() => {
     const isInspector = async () => {
-      setLoadingInspectorStatus(true);
       if (account != null && realEstate != null) {
+        setLoadingInspectorStatus(true);
         const result = await realEstate.connect(account).isInspector();
         setIsInspector(result);
+        setLoadingInspectorStatus(false);
       }
-      setLoadingInspectorStatus(false);
     };
 
     isInspector().then().catch();

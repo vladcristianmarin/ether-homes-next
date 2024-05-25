@@ -1,12 +1,6 @@
 import {
   Button,
   Chip,
-  Link,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
   Spinner,
   Table,
   TableBody,
@@ -17,9 +11,10 @@ import {
   Tooltip,
   useDisclosure,
 } from '@nextui-org/react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FaEye } from 'react-icons/fa6';
 
+import InspectorPropertyModal from '@/components/inspector-property-modal';
 import type { RealEstate } from '@/typechain-types';
 import { bigNumberToDate } from '@/utils';
 
@@ -81,7 +76,8 @@ const InspectorAllPropertyTable: React.FunctionComponent<
                     isIconOnly
                     aria-label="View property"
                     variant="light"
-                    className="cursor-pointer text-lg text-default-400 active:opacity-50"
+                    color="primary"
+                    className="cursor-pointer text-lg active:opacity-50"
                     onPress={() => handleViewProperty(property)}
                   >
                     <FaEye />
@@ -92,72 +88,12 @@ const InspectorAllPropertyTable: React.FunctionComponent<
           ))}
         </TableBody>
       </Table>
-      <Modal size="xl" isOpen={isOpen} onOpenChange={onOpenChange}>
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                Property Details
-              </ModalHeader>
-              {selectedProperty != null ? (
-                <ModalBody className="items-start">
-                  <div className="flex flex-row items-center gap-3">
-                    <p className="font-semibold">ID:</p>
-                    <p>{selectedProperty.id.toString()}</p>
-                  </div>
-                  <div className="flex flex-row items-center gap-3">
-                    <p className="font-semibold">Owner:</p>
-                    <p>{selectedProperty.owner.toString()}</p>
-                  </div>
-                  <div className="flex flex-row items-center gap-3">
-                    <p className="font-semibold">Address:</p>
-                    <p>
-                      {selectedProperty.city}, {selectedProperty.propertAddress}
-                    </p>
-                  </div>
-                  <div className="flex flex-row items-center gap-3">
-                    <p className="font-semibold">Rooms:</p>
-                    <p>{`Total ${selectedProperty.rooms.toString()} | Bathrooms ${selectedProperty.bathrooms.toString()}`}</p>
-                  </div>
-                  <div className="flex flex-row items-center gap-3">
-                    <p className="font-semibold">Year of construction:</p>
-                    <p>{selectedProperty.yearOfConstruction.toString()}</p>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-semibold">Documents :</p>
-                    {selectedProperty.documentsUris.map((uri, index) => (
-                      <Tooltip content={uri} key={`${uri}-${index}`}>
-                        <Link isExternal showAnchorIcon href={uri}>
-                          {uri.length > 18
-                            ? `${uri.slice(0, 18)}...${uri.slice(uri.length - 8, -1)}`
-                            : uri}
-                        </Link>
-                      </Tooltip>
-                    ))}
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <p className="font-semibold">Images :</p>
-                    {selectedProperty.imagesUris.map((uri, index) => (
-                      <Tooltip content={uri} key={`${uri}-${index}`}>
-                        <Link isExternal showAnchorIcon href={uri}>
-                          {uri.length > 18
-                            ? `${uri.slice(0, 18)}...${uri.slice(uri.length - 8, -1)}`
-                            : uri}
-                        </Link>
-                      </Tooltip>
-                    ))}
-                  </div>
-                </ModalBody>
-              ) : null}
-              <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Close
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+      <InspectorPropertyModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        selectedProperty={selectedProperty}
+        viewOnly
+      />
     </>
   );
 };

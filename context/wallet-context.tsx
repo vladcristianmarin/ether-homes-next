@@ -18,6 +18,7 @@ interface IWalletContext {
   address: `0x${string}` | undefined;
   provider: BrowserProvider | undefined;
   account: JsonRpcSigner | undefined;
+  isLoadingWallet?: boolean;
 }
 
 const WalletContext = createContext<IWalletContext>({} as IWalletContext);
@@ -25,6 +26,7 @@ const WalletContext = createContext<IWalletContext>({} as IWalletContext);
 const WalletContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { walletProvider } = useWeb3ModalProvider();
   const { address } = useWeb3ModalAccount();
+  const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>();
   const [provider, setProvider] = useState<BrowserProvider>();
   const [account, setAccount] = useState<JsonRpcSigner>();
 
@@ -37,8 +39,15 @@ const WalletContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     const fetchSigner = async () => {
       if (provider != null && address != null) {
-        const signer = await provider.getSigner(address);
-        setAccount(signer);
+        try {
+          setIsLoadingWallet(true);
+          const signer = await provider.getSigner(address);
+          setAccount(signer);
+        } catch (e: any) {
+          console.error(e);
+        } finally {
+          setIsLoadingWallet(false);
+        }
       }
     };
 
@@ -46,8 +55,8 @@ const WalletContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, [address, provider]);
 
   const contextValue = useMemo(
-    () => ({ walletProvider, address, provider, account }),
-    [walletProvider, address, provider, account],
+    () => ({ walletProvider, address, provider, account, isLoadingWallet }),
+    [walletProvider, address, provider, account, isLoadingWallet],
   );
 
   return (

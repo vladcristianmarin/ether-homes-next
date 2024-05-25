@@ -10,11 +10,13 @@ import { toast } from 'react-toastify';
 import InspectorAllPropertyTable from '@/components/inspector-all-properties-table';
 import InspectorUnverifiedPropertyTable from '@/components/inspector-unverified-property-table';
 import { useContracts } from '@/context/contracts-context';
+import { useWallet } from '@/context/wallet-context';
 import type { RealEstate } from '@/typechain-types';
 
 const InspectorDashboard: NextPage = () => {
   const router = useRouter();
 
+  const { isLoadingWallet } = useWallet();
   const { realEstate, loadingInspectorStatus, isInspector } = useContracts();
 
   const [unverifiedProperties, setUnverifiedProperties] = useState<
@@ -29,8 +31,11 @@ const InspectorDashboard: NextPage = () => {
   const [isFetchingAll, setIsFetchingAll] = useState<boolean>(false);
 
   const accessDenied = useMemo(
-    () => loadingInspectorStatus === false && isInspector === false,
-    [isInspector, loadingInspectorStatus],
+    () =>
+      loadingInspectorStatus === false &&
+      !isInspector &&
+      isLoadingWallet === false,
+    [isInspector, isLoadingWallet, loadingInspectorStatus],
   );
 
   useEffect(() => {
