@@ -66,6 +66,7 @@ const InspectorUnverifiedPropertyTable: React.FunctionComponent<
         property.id,
         `ipfs://${ipfsURI}`,
       );
+      await refetch();
       toast('Successfully created and assigned IPFS file', {
         type: 'success',
         autoClose: 500,
@@ -78,17 +79,17 @@ const InspectorUnverifiedPropertyTable: React.FunctionComponent<
     }
   };
 
-  const handleApprove = async () => {
-    if (selectedProperty == null) return;
+  const handleApprove = async (propertyArg?: RealEstate.PropertyStruct) => {
+    const property = selectedProperty || propertyArg;
+
+    if (property == null) return;
+
     setLoadingApprove(true);
     try {
-      await realEstate?.verifyProperty(
-        selectedProperty.owner,
-        selectedProperty.id,
-      );
+      await realEstate?.verifyProperty(property.owner, property.id);
       await refetch();
       onClose();
-      toast(`Property ${selectedProperty.id} approved`, {
+      toast(`Property ${property.id} approved`, {
         autoClose: 500,
         type: 'success',
       });
@@ -138,6 +139,7 @@ const InspectorUnverifiedPropertyTable: React.FunctionComponent<
                       isLoading={
                         property.id === selectedProperty?.id && loadingApprove
                       }
+                      onPress={() => handleApprove(property)}
                     >
                       <FaCheck />
                     </Button>
@@ -173,7 +175,7 @@ const InspectorUnverifiedPropertyTable: React.FunctionComponent<
                       isLoading={creatingIPFSFileID === property.id.toString()}
                       onPress={() => {
                         if (property.ipfsFile.length === 0) {
-                          handleCreateIPFS(property);
+                          handleCreateIPFS(property).then();
                         } else {
                           window.open(
                             property.ipfsFile,
