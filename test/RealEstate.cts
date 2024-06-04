@@ -2,165 +2,187 @@ import type { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signer
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 
-import type { RealEstate } from '../typechain-types/contracts/RealEstate';
-import { ContractRunner } from 'ethers';
+import type { Marketplace, RealEstate } from '@/typechain-types';
 
-const TEST_IPFS = [
-  'QmPRUexYFgx9zCg7H5zFdAw6yvAZk3a2kcGPzRcGHvfCqg',
-  'QmbqCZ8xfR6yHapNPCt8NAgD8QxAY7rpPhqJoVWDu9rnUf',
-];
-
-const createTestProperty = async (
-  realEstate: RealEstate,
-  caller: ContractRunner,
-) => {
-  let transaction: any = await realEstate
-    .connect(caller)
-    .createProperty(
-      'Bucuresti',
-      'Str Sandulesti 7',
-      4,
-      1,
-      59,
-      62,
-      1992,
-      ['docs'],
-      ['images'],
-    );
-
-  transaction = await transaction.wait();
+const ethToWei = (n: number) => {
+  return ethers.parseUnits(n.toString(), 'ether');
 };
 
-describe('RealEstate', () => {
-  let realEstate: RealEstate;
-  let dApp: HardhatEthersSigner;
+const tokenURI = 'ipfs://QmPRUexYFgx9zCg7H5zFdAw6yvAZk3a2kcGPzRcGHvfCqg';
+
+describe('Marketplace', () => {
+  let buyer: HardhatEthersSigner;
   let seller: HardhatEthersSigner;
+  let lender: HardhatEthersSigner;
   let inspector: HardhatEthersSigner;
+  let realEstate: RealEstate;
+  let marketplace: Marketplace;
+  let transaction;
+  let tokenId: bigint;
+
+  const listProperty = async () => {
+    transaction = await marketplace
+      .connect(seller)
+      .listProperty(tokenId, tokenURI, ethToWei(1));
+
+    await transaction.wait();
+  };
+
+  const makeOffer = async () => {
+    await listProperty();
+    transaction = await marketplace.connect(buyer).makeOffer(tokenId);
+
+    await transaction.wait();
+  };
+
+  const acceptOffer = async () => {
+    await makeOffer();
+
+    const event = marketplace.getEvent('EscrowCreated');
+
+    const eventPromise = new Promise<string>((resolve, reject) => {
+      marketplace.once(event, (_, address) => {
+        resolve(address);
+      });
+
+      setTimeout(() => {
+        reject(new Error('Event did not trigger in time'));
+      }, 60000); // Timeout after 60 seconds
+    });
+
+    transaction = await marketplace.connect(seller).acceptOffer(tokenId, buyer);
+
+    await transaction.wait();
+
+    return eventPromise;
+  };
 
   beforeEach(async () => {
-    [dApp, seller, inspector] = await ethers.getSigners();
+    [buyer, seller, lender, inspector] = await ethers.getSigners();
+
     const RealEstate = await ethers.getContractFactory('RealEstate');
     realEstate = await RealEstate.deploy([inspector]);
     await realEstate.waitForDeployment();
-  });
 
-  it('should initialize the contract correctly', async () => {
-    const owner = await realEstate.owner();
-    expect(owner).to.be.equal(dApp);
-  });
+    transaction = await realEstate.connect(seller).mintDummy(tokenURI);
 
-  it('should create property', async () => {
-    await createTestProperty(realEstate, seller);
+    tokenId = transaction.value;
 
-    const myProperties = await realEstate
-      .connect(seller)
-      .getCreatedProperties();
-
-    expect(myProperties[0].id).to.be.equal(0);
-  });
-
-  it('should update property', async () => {
-    await createTestProperty(realEstate, seller);
-
-    const transaction = await realEstate
-      .connect(inspector)
-      .verifyProperty(seller, 0);
-
-    await transaction.wait();
-
-    const property = await realEstate.connect(seller).getCreatedPropertyById(0);
-
-    expect(property.verified).to.be.equal(true);
-  });
-
-  it('should mint an initial NFT', async () => {
-    await createTestProperty(realEstate, seller);
-
-    let transaction = await realEstate
-      .connect(inspector)
-      .verifyProperty(seller, 0);
-
-    await transaction.wait();
+    const Marketplace = await ethers.getContractFactory('Marketplace');
+    marketplace = await Marketplace.deploy(await realEstate.getAddress());
+    await marketplace.waitForDeployment();
 
     transaction = await realEstate
       .connect(seller)
-      .createTokenURI(TEST_IPFS[0], 0);
+      .approve(await marketplace.getAddress(), tokenId);
+
     await transaction.wait();
-
-    const tokenURI = await realEstate.tokenURI(0);
-
-    expect(tokenURI).to.be.equal(TEST_IPFS[0]);
   });
 
-  it('should update the tokenURI', async () => {
-    await createTestProperty(realEstate, seller);
+  it('should list property nft', async () => {
+    const event = marketplace.getEvent('PropertyListed');
 
-    let transaction = await realEstate
-      .connect(inspector)
-      .verifyProperty(seller, 0);
+    const eventPromise = new Promise<{ nftId: bigint }>((resolve, reject) => {
+      marketplace.once(event, (nftId) => {
+        resolve({ nftId });
+      });
+
+      setTimeout(() => {
+        reject(new Error('Event did not trigger in time'));
+      }, 60000); // Timeout after 60 seconds
+    });
+
+    transaction = await marketplace.listProperty(
+      tokenId,
+      tokenURI,
+      ethToWei(1),
+    );
 
     await transaction.wait();
 
-    transaction = await realEstate
-      .connect(seller)
-      .createTokenURI(TEST_IPFS[0], 0);
-    await transaction.wait();
+    const { nftId } = await eventPromise;
 
-    transaction = await realEstate
-      .connect(seller)
-      .updateTokenURI(0, TEST_IPFS[1]);
-    await transaction.wait();
-
-    const tokenURI = await realEstate.tokenURI(0);
-
-    expect(tokenURI).to.be.equal(TEST_IPFS[1]);
+    expect(nftId).to.equal(tokenId);
   });
 
-  it('should return address minted tokens', async () => {
-    await createTestProperty(realEstate, seller);
+  it('should cancel listing', async () => {
+    await listProperty();
 
-    let transaction = await realEstate
-      .connect(inspector)
-      .verifyProperty(seller, 0);
+    const event = marketplace.getEvent('ListingCanceled');
 
+    const eventPromise = new Promise<{ nftId: bigint }>((resolve, reject) => {
+      marketplace.once(event, (nftId) => {
+        resolve({ nftId });
+      });
+
+      setTimeout(() => {
+        reject(new Error('Event did not trigger in time'));
+      }, 60000); // Timeout after 60 seconds
+    });
+
+    transaction = await marketplace.connect(seller).cancelListing(tokenId);
     await transaction.wait();
 
-    transaction = await realEstate
-      .connect(seller)
-      .createTokenURI(TEST_IPFS[0], 0);
-    await transaction.wait();
+    const { nftId } = await eventPromise;
 
-    const ownedTokens = await realEstate.getOwnedTokens(seller);
+    const listings = await marketplace.getAllListed();
 
-    expect(ownedTokens[0]).to.be.equal('0');
+    expect(listings.length).to.be.greaterThan(0);
+    expect(listings[0].isActive).to.be.false;
+    expect(nftId).to.equal(tokenId);
   });
 
-  it('should return assigned contracts for inspector', async () => {
-    await createTestProperty(realEstate, seller);
-    let uninspectedProperties = await realEstate
-      .connect(inspector)
-      .getUninspectedProperties();
+  it('makes offer', async () => {
+    await listProperty();
 
-    const initLength = uninspectedProperties.length;
-
-    const transaction = await realEstate
-      .connect(inspector)
-      .verifyProperty(seller, 0);
+    transaction = await marketplace.connect(buyer).makeOffer(tokenId);
 
     await transaction.wait();
 
-    uninspectedProperties = await realEstate
-      .connect(inspector)
-      .getUninspectedProperties();
+    const listings = await marketplace.getAllListed();
 
-    const finalLength = uninspectedProperties.length;
+    expect(listings.length).to.be.greaterThan(0);
+    expect(listings[0].buyers[0]).to.be.equal(buyer);
+  });
 
-    const allAssigned = await realEstate
-      .connect(inspector)
-      .getAssignedProperties();
+  it('should accept offer', async () => {
+    await makeOffer();
 
-    expect(initLength).to.be.equal(1);
-    expect(finalLength).to.be.equal(0);
-    expect(allAssigned.length).to.be.equal(1);
+    const event = marketplace.getEvent('EscrowCreated');
+
+    const eventPromise = new Promise<string>((resolve, reject) => {
+      marketplace.once(event, (_, address) => {
+        resolve(address);
+      });
+
+      setTimeout(() => {
+        reject(new Error('Event did not trigger in time'));
+      }, 60000); // Timeout after 60 seconds
+    });
+
+    transaction = await marketplace.connect(seller).acceptOffer(tokenId, buyer);
+
+    await transaction.wait();
+
+    const newAddress = await eventPromise;
+    const tokenAddress = await realEstate.ownerOf(tokenId);
+
+    expect(tokenAddress).to.equal(newAddress);
+  });
+
+  it('should pay deposit', async () => {
+    const escrowAddress = await acceptOffer();
+
+    await marketplace
+      .connect(buyer)
+      .payDeposit(tokenId, { value: ethToWei(0.0003) });
+
+    const Escrow = await ethers.getContractFactory('Escrow');
+
+    const escrow = Escrow.attach(escrowAddress);
+
+    const balance = await ethers.provider.getBalance(escrow);
+
+    expect(balance).to.equal(ethToWei(0.0003));
   });
 });

@@ -27,6 +27,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "**/*.cts",
     ".next/types/**/*.ts",
     "hardhat.config.cts",
     "test/RealEstate.cts",

@@ -5,6 +5,7 @@ import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
+
 contract RealEstate is ERC721URIStorage, Ownable {
   struct Property {
     uint256 id;
@@ -135,6 +136,13 @@ contract RealEstate is ERC721URIStorage, Ownable {
     emit PropertyCreated(newProperty);
 
     return propertyId;
+  }
+
+  function mintDummy(string memory tokenURI) public returns (uint256) {
+    _mint(msg.sender, 0);
+    _setTokenURI(0, tokenURI);
+
+    return 0;
   }
 
   function createTokenURI(
