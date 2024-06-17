@@ -2,7 +2,7 @@
 
 import { Button, Spinner, Tooltip, useDisclosure } from '@nextui-org/react';
 import type { AddressLike } from 'ethers';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import { MdOutlineSell } from 'react-icons/md';
 import { toast } from 'react-toastify';
@@ -27,15 +27,29 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const [tokenForListing, setTokenForListing] = useState<bigint>(BigInt(0));
 
+  const lock = useRef<boolean>(false);
+
   useEffect(() => {
-    if (marketplace && account) {
-      marketplace
-        .connect(account)
-        .on(marketplace.getEvent('PropertyListed'), (args) => {
-          console.log(args);
-        });
+    if (marketplace && realEstate && account) {
+      const event = marketplace.getEvent('PropertyListed');
+
+      // Asumam ca nftId === propertyId (ceea ce ar trb sa fie)
+      marketplace.connect(account).on(event, async (nftId) => {
+        if (!lock.current) {
+          lock.current = true;
+          const transaction = await realEstate
+            .connect(account)
+            .updateListedProperty(nftId, true);
+
+          await transaction.wait();
+
+          lock.current = false;
+        }
+
+        toast('Property listed successfully!', { type: 'success' });
+      });
     }
-  }, [account, marketplace]);
+  }, [account, marketplace, realEstate]);
 
   const handleOpenTokenURI = async (token: bigint) => {
     if (realEstate) {

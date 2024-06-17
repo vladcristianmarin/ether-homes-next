@@ -43,6 +43,8 @@
         "project": "./tsconfig.json"
       },
       "rules": {
+        "no-nested-ternary": "off",
+        "eslint-plugin-unicorn/no-nested-ternary": "off",
         "no-console": "off",
         "prettier/prettier": [
           "warn",

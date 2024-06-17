@@ -37,6 +37,44 @@ async function main() {
     ),
   );
 
+  // Create properties
+
+  let transaction = await realEstate
+    .connect(inspector)
+    .createProperty(
+      'Bucuresti',
+      'Strada Primaverii 10',
+      4,
+      1,
+      69,
+      71,
+      1999,
+      [
+        'https://gray-worthwhile-hornet-806.mypinata.cloud/ipfs/QmSZ4NA7fq352Mrh7bZZsoP412ftE9zC7kYBr5LT3SuwYK',
+      ],
+      [
+        'https://gray-worthwhile-hornet-806.mypinata.cloud/ipfs/QmPcFYybWZRJz9AZkPsrkKTFbj7x7ytUAViD97GSus7iVR',
+      ],
+    );
+
+  await transaction.wait();
+
+  transaction = await realEstate
+    .connect(inspector)
+    .assignIpfsFile(
+      inspector,
+      0,
+      'ipfs://QmSyHH87p3fJdomGYx2cX64P8xpgnN1YZJj2cY5WNtA4pR',
+    );
+
+  await transaction.wait();
+
+  transaction = await realEstate
+    .connect(inspector)
+    .verifyProperty(inspector, 0);
+
+  await transaction.wait();
+
   // Deploy Marketplace contract
   const MarketplaceFactory = await ethers.getContractFactory('Marketplace');
   const marketplace: Marketplace = await MarketplaceFactory.connect(

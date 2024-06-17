@@ -308,6 +308,11 @@
               "type": "bool"
             },
             {
+              "internalType": "bool",
+              "name": "isListed",
+              "type": "bool"
+            },
+            {
               "internalType": "string",
               "name": "ipfsFile",
               "type": "string"
@@ -586,6 +591,11 @@
               "type": "bool"
             },
             {
+              "internalType": "bool",
+              "name": "isListed",
+              "type": "bool"
+            },
+            {
               "internalType": "string",
               "name": "ipfsFile",
               "type": "string"
@@ -678,6 +688,11 @@
             {
               "internalType": "bool",
               "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isListed",
               "type": "bool"
             },
             {
@@ -779,6 +794,11 @@
             {
               "internalType": "bool",
               "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isListed",
               "type": "bool"
             },
             {
@@ -926,6 +946,11 @@
               "type": "bool"
             },
             {
+              "internalType": "bool",
+              "name": "isListed",
+              "type": "bool"
+            },
+            {
               "internalType": "string",
               "name": "ipfsFile",
               "type": "string"
@@ -1018,6 +1043,11 @@
             {
               "internalType": "bool",
               "name": "isTokenized",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "isListed",
               "type": "bool"
             },
             {
@@ -1331,6 +1361,24 @@
       "inputs": [
         {
           "internalType": "uint256",
+          "name": "propertyId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isListed",
+          "type": "bool"
+        }
+      ],
+      "name": "updateListedProperty",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
           "name": "tokenID",
           "type": "uint256"
         },
@@ -1364,5 +1412,5 @@
       "type": "function"
     }
   ],
-  "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+  "address": "0x9A676e781A523b5d0C0e43731313A708CB607508"
 }

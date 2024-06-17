@@ -21,6 +21,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
     address propertyInspector;
     bool verified;
     bool isTokenized;
+    bool isListed;
     string ipfsFile;
     string[] documentsUris;
     string[] imagesUris;
@@ -114,6 +115,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
       _yearOfConstruction,
       block.timestamp,
       inspectors[pseudoRandomInspectorId],
+      false,
       false,
       false,
       '',
@@ -328,6 +330,17 @@ contract RealEstate is ERC721URIStorage, Ownable {
     }
 
     return false;
+  }
+
+  function updateListedProperty(uint256 propertyId, bool isListed) public _onlyOwner(msg.sender, propertyId) {
+    Property memory property = properties[msg.sender][propertyId];
+
+    require(
+      property.owner != 0x0000000000000000000000000000000000000000,
+      'Property was not found!'
+    );
+
+    properties[msg.sender][propertyId].isListed = isListed;
   }
 
   function assignIpfsFile(

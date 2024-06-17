@@ -98,9 +98,19 @@ const CreatedPropertiesTable: React.FC<CreatedPropertiesTableProps> = ({
                     className="capitalize"
                     size="sm"
                     variant="flat"
-                    color={property.verified ? 'success' : 'warning'}
+                    color={
+                      property.isListed
+                        ? 'danger'
+                        : property.verified
+                          ? 'success'
+                          : 'warning'
+                    }
                   >
-                    {property.verified ? 'Verified' : 'Unverified'}
+                    {property.isListed
+                      ? 'Listed'
+                      : property.verified
+                        ? 'Verified'
+                        : 'Unverified'}
                   </Chip>
                 </TableCell>
                 <TableCell>

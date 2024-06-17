@@ -162,4 +162,24 @@ contract Marketplace {
 
         return allListings;
     }
+
+    function getListedBySeller(address seller) public view returns (Listing[] memory) {
+        uint256 bySellerCount;
+
+        for(uint256 i = 0; i < count; i++) {
+            if(listings[listed[i]].seller == seller) {
+                bySellerCount++;
+            }
+        }
+
+        Listing[] memory listingsBySeller = new Listing[](bySellerCount);
+
+        for(uint256 i = 0; i < count; i++)  {
+            if(listings[listed[i]].seller == seller) {
+                listingsBySeller[i] = listings[listed[i]];
+            }
+        }
+
+        return listingsBySeller;
+    }
 }
