@@ -2,14 +2,18 @@ import { Contract } from 'ethers';
 import type { PropsWithChildren } from 'react';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import MarketplaceAbi from '@/abis/Marketplace.json';
 import RealEstateAbi from '@/abis/RealEstate.json';
 import type { RealEstate } from '@/typechain-types';
+import type { Marketplace } from '@/typechain-types/contracts/Marketplace.sol';
 
 import { useWallet } from './wallet-context';
 
 interface IContractsContext {
   realEstateAddress: string | undefined;
   realEstate: RealEstate | undefined;
+  marketplaceAddress: string | undefined;
+  marketplace: Marketplace | undefined;
   isInspector: boolean;
   loadingInspectorStatus: boolean | undefined;
 }
@@ -25,6 +29,10 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
 
   const [realEstate, setRealEstate] = useState<RealEstate>();
   const [realEstateAddress, setRealEstateAddress] = useState<string>();
+
+  const [marketplace, setMarketplace] = useState<Marketplace>();
+  const [marketplaceAddress, setMarketplaceAddress] = useState<string>();
+
   const [isInspector, setIsInspector] = useState<boolean>(false);
   const [loadingInspectorStatus, setLoadingInspectorStatus] =
     useState<boolean>();
@@ -41,14 +49,25 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
 
         setRealEstate(realEstateContract);
         setRealEstateAddress(RealEstateAbi.address);
+      }
+    };
 
-        if (realEstateContract) {
-          setRealEstate(realEstateContract);
-        }
+    const createMarketplaceContract = async () => {
+      if (account != null) {
+        // @ts-expect-error
+        const marketplaceContract: Marketplace = new Contract(
+          MarketplaceAbi.address,
+          MarketplaceAbi.abi,
+          account,
+        );
+
+        setMarketplace(marketplaceContract);
+        setMarketplaceAddress(MarketplaceAbi.address);
       }
     };
 
     createRealEstateContract().then().catch();
+    createMarketplaceContract().then().catch();
   }, [account]);
 
   useEffect(() => {
@@ -68,10 +87,19 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
     () => ({
       realEstate,
       realEstateAddress,
+      marketplace,
+      marketplaceAddress,
       isInspector,
       loadingInspectorStatus,
     }),
-    [isInspector, loadingInspectorStatus, realEstate, realEstateAddress],
+    [
+      isInspector,
+      loadingInspectorStatus,
+      marketplace,
+      marketplaceAddress,
+      realEstate,
+      realEstateAddress,
+    ],
   );
 
   return (

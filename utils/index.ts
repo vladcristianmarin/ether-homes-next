@@ -3,6 +3,10 @@
 import type { BigNumberish } from 'ethers';
 import moment from 'moment';
 
+import type {
+  SimplifiedTokenizedProperty,
+  TokenizedProperty,
+} from '@/models/TokenizedProperty';
 import type { RealEstate } from '@/typechain-types';
 
 export function bigNumberToDate(bigN: BigNumberish) {
@@ -46,4 +50,21 @@ export const createPropertyJSON = (property: RealEstate.PropertyStruct) => {
   });
 
   return propertyJSON;
+};
+
+export const simplifyProperty = (
+  property: TokenizedProperty,
+): SimplifiedTokenizedProperty => {
+  const simplified: SimplifiedTokenizedProperty = {
+    name: property.name,
+    description: property.description,
+    image: property.image,
+  };
+
+  property.attributes.forEach((attribute) => {
+    const key = attribute.trait_type.replace(/\s+/g, '').toLowerCase();
+    simplified[key] = attribute.value;
+  });
+
+  return simplified;
 };

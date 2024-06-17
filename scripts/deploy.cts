@@ -1,3 +1,5 @@
+import type { Marketplace } from '@/typechain-types/contracts/Marketplace.sol';
+
 import type { RealEstate } from '../typechain-types';
 
 const hre = require('hardhat');
@@ -30,6 +32,33 @@ async function main() {
     path.join(dir, 'RealEstate.json'),
     JSON.stringify(
       { abi: realEstateAbi, address: await realEstate.getAddress() },
+      null,
+      2,
+    ),
+  );
+
+  // Deploy Marketplace contract
+  const MarketplaceFactory = await ethers.getContractFactory('Marketplace');
+  const marketplace: Marketplace = await MarketplaceFactory.connect(
+    dApp,
+  ).deploy(await realEstate.getAddress());
+
+  await marketplace.waitForDeployment();
+
+  console.log(
+    `Deployed MarketplaceContract contract at: ${await marketplace.getAddress()}`,
+  );
+
+  const marketplaceAbi = (await hre.artifacts.readArtifact('Marketplace')).abi;
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(
+    path.join(dir, 'Marketplace.json'),
+    JSON.stringify(
+      { abi: marketplaceAbi, address: await marketplace.getAddress() },
       null,
       2,
     ),

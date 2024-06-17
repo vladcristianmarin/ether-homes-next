@@ -1,12 +1,16 @@
 // components/OwnedTokens.js
 
-import { Button, Spinner, Tooltip } from '@nextui-org/react';
-import React from 'react';
+import { Button, Spinner, Tooltip, useDisclosure } from '@nextui-org/react';
+import type { AddressLike } from 'ethers';
+import React, { useEffect, useState } from 'react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import { MdOutlineSell } from 'react-icons/md';
 import { toast } from 'react-toastify';
 
 import { useContracts } from '@/context/contracts-context';
+import { useWallet } from '@/context/wallet-context';
+
+import ListPropertyModal from './list-property-modal';
 
 interface OwnedTokensTableProps {
   tokens: bigint[];
@@ -17,13 +21,27 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
   tokens,
   isLoading,
 }) => {
-  const { realEstate, realEstateAddress } = useContracts();
+  const { account } = useWallet();
+  const { realEstate, marketplace, realEstateAddress, marketplaceAddress } =
+    useContracts();
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const [tokenForListing, setTokenForListing] = useState<bigint>(BigInt(0));
+
+  useEffect(() => {
+    if (marketplace && account) {
+      marketplace
+        .connect(account)
+        .on(marketplace.getEvent('PropertyListed'), (args) => {
+          console.log(args);
+        });
+    }
+  }, [account, marketplace]);
 
   const handleOpenTokenURI = async (token: bigint) => {
     if (realEstate) {
       try {
         const tokenURI = await realEstate.tokenURI(token);
-        console.log(tokenURI);
+
         if (tokenURI) {
           window.open(tokenURI, '_blank', 'noopener,noreferrer');
         }
@@ -33,7 +51,35 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
     }
   };
 
-  const handleListOnSale = async (token: bigint) => {};
+  const handleListOnSale = async (token: bigint) => {
+    setTokenForListing(token);
+    onOpen();
+  };
+
+  const handleConfirmList = async (price: number) => {
+    if (marketplace && realEstate) {
+      try {
+        const tokenURI = await realEstate.tokenURI(tokenForListing);
+
+        let transaction = await marketplace.listProperty(
+          tokenForListing,
+          tokenURI,
+          price,
+        );
+
+        await transaction.wait();
+
+        transaction = await realEstate
+          .connect(account)
+          .approve(marketplaceAddress as AddressLike, tokenForListing);
+
+        await transaction.wait();
+        onClose();
+      } catch (err: any) {
+        toast('Listing property failed', { type: 'error' });
+      }
+    }
+  };
 
   return (
     <div className="w-full">
@@ -55,7 +101,7 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
         {tokens.map((token: bigint, index) => (
           <div
             key={`${token}-${index}`}
-            className="flex items-center justify-between px-2"
+            className="my-2 flex items-center justify-between px-2"
           >
             <p className="text-sm font-semibold">
               TOKEN_ID: {token.toString()}
@@ -92,6 +138,13 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
           </div>
         ))}
       </div>
+
+      <ListPropertyModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        handleList={handleConfirmList}
+        token={tokenForListing}
+      />
     </div>
   );
 };

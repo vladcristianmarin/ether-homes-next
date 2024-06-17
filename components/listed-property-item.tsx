@@ -31,7 +31,7 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
       </CardBody>
       <CardFooter className="max-w-[420px] flex-col items-start gap-1">
         <p className="mb-3 flex items-center text-2xl font-bold">
-          6 <FaEthereum /> ETH
+          {property.price} <FaEthereum /> ETH
         </p>
         <p className="text-medium font-semibold">
           {property.propertyaddress} {property.city}
@@ -42,20 +42,22 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
 
         <div className="mt-6 flex items-center justify-start gap-3">
           <div className="flex items-center justify-start gap-1 rounded-md bg-sky-100 p-3">
-            <LuConstruction />
-            <p className="text-sm">Built in {property.yearofconstruction}</p>
+            <LuConstruction className="text-black" />
+            <p className="text-sm text-black">
+              Built in {property.yearofconstruction}
+            </p>
           </div>
           <div className="flex items-center justify-start gap-1 rounded-md bg-orange-100 p-3">
-            <LuRuler />
-            <p className="text-sm">{property.totalarea}m2</p>
+            <LuRuler className="text-black" />
+            <p className="text-sm text-black">{property.totalarea}m2</p>
           </div>
           <div className="flex items-center justify-start gap-1 rounded-md bg-red-100 p-3">
-            <LuBedDouble />
-            <p className="text-sm">{property.rooms}</p>
+            <LuBedDouble className="text-black" />
+            <p className="text-sm text-black">{property.rooms}</p>
           </div>
           <div className="flex items-center justify-start gap-1 rounded-md bg-green-100 p-3">
-            <LuBath />
-            <p className="text-sm">{property.bathrooms}</p>
+            <LuBath className="text-black" />
+            <p className="text-sm text-black">{property.bathrooms}</p>
           </div>
         </div>
 
