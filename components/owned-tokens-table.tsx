@@ -30,13 +30,15 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
   const lock = useRef<boolean>(false);
 
   useEffect(() => {
+    let event = null;
     if (marketplace && realEstate && account) {
-      const event = marketplace.getEvent('PropertyListed');
+      event = marketplace.getEvent('PropertyListed');
 
       // Asumam ca nftId === propertyId (ceea ce ar trb sa fie)
-      marketplace.connect(account).on(event, async (nftId) => {
+      marketplace.connect(account).once(event, async (nftId) => {
         if (!lock.current) {
           lock.current = true;
+
           const transaction = await realEstate
             .connect(account)
             .updateListedProperty(nftId, true);
@@ -49,6 +51,10 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
         toast('Property listed successfully!', { type: 'success' });
       });
     }
+
+    return () => {
+      if (event && marketplace) marketplace.removeAllListeners(event);
+    };
   }, [account, marketplace, realEstate]);
 
   const handleOpenTokenURI = async (token: bigint) => {

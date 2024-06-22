@@ -56,6 +56,7 @@ export default function Home() {
         <ListedPropertyItem
           key={`${property.name}-${index}`}
           property={property}
+          marketplaceData={listedPropertiesData[index]}
         />
       ))}
     </div>

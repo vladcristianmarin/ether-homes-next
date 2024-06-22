@@ -1,11 +1,24 @@
 import { Button, Card, CardBody, CardFooter, Image } from '@nextui-org/react';
+import { useCallback, useMemo } from 'react';
 import { FaEthereum } from 'react-icons/fa6';
 import { LuBath, LuBedDouble, LuConstruction, LuRuler } from 'react-icons/lu';
+import { toast } from 'react-toastify';
 
+import { useContracts } from '@/context/contracts-context';
+import { useWallet } from '@/context/wallet-context';
 import type { SimplifiedTokenizedProperty } from '@/models/TokenizedProperty';
+import type { Marketplace } from '@/typechain-types/contracts/Marketplace.sol';
+
+enum UserRole {
+  Seller,
+  Buyer,
+  Lender,
+  Guest,
+}
 
 interface IListedPropertyItemProps {
   property: SimplifiedTokenizedProperty;
+  marketplaceData: Marketplace.ListingStructOutput;
 }
 
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
@@ -15,9 +28,78 @@ const scale = 30;
 
 const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
   property,
+  marketplaceData,
 }) => {
+  const { account } = useWallet();
+  const { marketplace } = useContracts();
+
+  const handleBuyOffer = useCallback(async () => {
+    if (account == null) {
+      return toast('You need to connect an account!', { type: 'error' });
+    }
+
+    if (marketplace == null) {
+      return toast('Something went wrong!', { type: 'error' });
+    }
+
+    try {
+      const transaction = await marketplace
+        .connect(account)
+        .makeOffer(marketplaceData.nftId);
+
+      await transaction.wait();
+
+      toast('Buying offer succesfull! Wait for seller approval');
+    } catch (err: any) {
+      toast('Something went wrong', { type: 'error' });
+    }
+
+    return null;
+  }, [account, marketplace, marketplaceData.nftId]);
+
+  const actionButton = useMemo(() => {
+    if (!account) {
+      return {
+        title: 'Buy',
+        onClick: () => {
+          toast('You need to connect an account!', { type: 'info' });
+        },
+      };
+    }
+    if (account.address === marketplaceData.seller) {
+      return {
+        title: 'View Buy Offers',
+        onClick: () => {},
+        color: 'secondary',
+      };
+    }
+    if (account.address === marketplaceData.buyer) {
+      return { title: 'Pay deposit', onClick: () => {}, color: 'secondary' };
+    }
+    if (marketplaceData.buyers.includes(account.address)) {
+      return {
+        title: "Wait for seller's approval",
+        onClick: undefined,
+        isDisabled: true,
+        color: 'success',
+      };
+    }
+
+    return { title: 'Buy', onClick: handleBuyOffer, color: 'primary' };
+  }, [
+    account,
+    handleBuyOffer,
+    marketplaceData.buyer,
+    marketplaceData.buyers,
+    marketplaceData.seller,
+  ]);
+
+  const handlePressProperty = () => {
+    window.open(marketplaceData.nftURI, '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <Card shadow="sm" isPressable>
+    <Card shadow="sm" isPressable onPress={handlePressProperty}>
       <CardBody className="overflow-visible p-0">
         <Image
           shadow="sm"
@@ -61,8 +143,14 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
           </div>
         </div>
 
-        <Button color="primary" className="mt-3">
-          <p className="mx-6">Buy</p>
+        <Button
+          // @ts-ignore
+          color={actionButton.color ?? 'primary'}
+          className="mt-3"
+          onClick={actionButton.onClick}
+          isDisabled={actionButton.isDisabled}
+        >
+          <p className="mx-6">{actionButton.title}</p>
         </Button>
       </CardFooter>
     </Card>
