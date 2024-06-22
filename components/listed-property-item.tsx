@@ -1,4 +1,11 @@
-import { Button, Card, CardBody, CardFooter, Image } from '@nextui-org/react';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardFooter,
+  Image,
+  useDisclosure,
+} from '@nextui-org/react';
 import { useCallback, useMemo } from 'react';
 import { FaEthereum } from 'react-icons/fa6';
 import { LuBath, LuBedDouble, LuConstruction, LuRuler } from 'react-icons/lu';
@@ -7,14 +14,9 @@ import { toast } from 'react-toastify';
 import { useContracts } from '@/context/contracts-context';
 import { useWallet } from '@/context/wallet-context';
 import type { SimplifiedTokenizedProperty } from '@/models/TokenizedProperty';
-import type { Marketplace } from '@/typechain-types/contracts/Marketplace.sol';
+import type { Marketplace } from '@/typechain-types';
 
-enum UserRole {
-  Seller,
-  Buyer,
-  Lender,
-  Guest,
-}
+import BuyOffersModal from './buy-offers-modal';
 
 interface IListedPropertyItemProps {
   property: SimplifiedTokenizedProperty;
@@ -30,6 +32,8 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
   property,
   marketplaceData,
 }) => {
+  const { isOpen, onOpenChange, onOpen } = useDisclosure();
+
   const { account } = useWallet();
   const { marketplace } = useContracts();
 
@@ -67,9 +71,18 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
       };
     }
     if (account.address === marketplaceData.seller) {
+      if (marketplaceData.buyer != null) {
+        return {
+          title: 'Wait for deposit',
+          onClick: undefined,
+          color: 'success',
+          isDisabled: true,
+        };
+      }
+
       return {
         title: 'View Buy Offers',
-        onClick: () => {},
+        onClick: onOpen,
         color: 'secondary',
       };
     }
@@ -92,6 +105,7 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
     marketplaceData.buyer,
     marketplaceData.buyers,
     marketplaceData.seller,
+    onOpen,
   ]);
 
   const handlePressProperty = () => {
@@ -153,6 +167,12 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
           <p className="mx-6">{actionButton.title}</p>
         </Button>
       </CardFooter>
+      <BuyOffersModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        nftId={marketplaceData.nftId}
+        buyers={marketplaceData.buyers}
+      />
     </Card>
   );
 };

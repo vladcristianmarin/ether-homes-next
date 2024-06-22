@@ -12,6 +12,7 @@ export const siteConfig = {
       label: 'Inspector dashboard',
       href: '/inspector-dashboard',
     },
+    { label: 'Your listed properties', href: '/listed-properties' },
   ],
   navMenuItems: [],
   links: {},

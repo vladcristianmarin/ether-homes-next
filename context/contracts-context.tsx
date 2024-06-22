@@ -4,8 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import MarketplaceAbi from '@/abis/Marketplace.json';
 import RealEstateAbi from '@/abis/RealEstate.json';
-import type { RealEstate } from '@/typechain-types';
-import type { Marketplace } from '@/typechain-types/contracts/Marketplace.sol';
+import type { Marketplace, RealEstate } from '@/typechain-types';
 
 import { useWallet } from './wallet-context';
 
