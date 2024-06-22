@@ -38,6 +38,7 @@ const BuyOffersModal: React.FC<IBuyOffersModalProps> = ({
         await transaction.wait();
         toast('Buyer accepted!', { type: 'success' });
       } catch (err: any) {
+        console.log(err);
         toast('Something went wrong!', { type: 'error' });
       }
     } else {

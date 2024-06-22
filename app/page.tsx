@@ -1,7 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import ListedPropertyItem from '@/components/listed-property-item';
 import { useContracts } from '@/context/contracts-context';
@@ -22,33 +22,33 @@ export default function Home() {
     [],
   );
 
-  useEffect(() => {
-    const fetchProperties = async () => {
-      if (marketplace) {
-        const listedProperties = await marketplace.getAllListed();
-        setListedPropertiesData(listedProperties);
+  const fetchProperties = useCallback(async () => {
+    if (marketplace) {
+      const listedProperties = await marketplace.getAllListed();
+      setListedPropertiesData(listedProperties);
 
-        const properties = await Promise.all(
-          listedProperties.map(
-            async (listedProperty: Marketplace.ListingStructOutput) => {
-              const response = await axios.get(
-                listedProperty.nftURI.replace('ipfs://', IPFS_GATEWAY),
-              );
+      const properties = await Promise.all(
+        listedProperties.map(
+          async (listedProperty: Marketplace.ListingStructOutput) => {
+            const response = await axios.get(
+              listedProperty.nftURI.replace('ipfs://', IPFS_GATEWAY),
+            );
 
-              return {
-                ...simplifyProperty(response.data),
-                price: Number(listedProperty.price),
-              };
-            },
-          ),
-        );
+            return {
+              ...simplifyProperty(response.data),
+              price: Number(listedProperty.price),
+            };
+          },
+        ),
+      );
 
-        setProperties(properties);
-      }
-    };
-
-    fetchProperties().then();
+      setProperties(properties);
+    }
   }, [marketplace]);
+
+  useEffect(() => {
+    fetchProperties().then();
+  }, [fetchProperties]);
 
   return (
     <div className="grid grid-cols-3 gap-3">
@@ -57,6 +57,7 @@ export default function Home() {
           key={`${property.name}-${index}`}
           property={property}
           marketplaceData={listedPropertiesData[index]}
+          refetch={fetchProperties}
         />
       ))}
     </div>

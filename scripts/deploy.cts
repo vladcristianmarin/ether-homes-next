@@ -1,6 +1,4 @@
-import type { Marketplace } from '@/typechain-types/contracts/Marketplace.sol';
-
-import type { RealEstate } from '../typechain-types';
+import type { Marketplace, RealEstate } from '@/typechain-types';
 
 const hre = require('hardhat');
 const fs = require('fs');
@@ -100,6 +98,17 @@ async function main() {
       null,
       2,
     ),
+  );
+
+  const escrowAbi = (await hre.artifacts.readArtifact('Escrow')).abi;
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(
+    path.join(dir, 'Escrow.json'),
+    JSON.stringify({ abi: escrowAbi }, null, 2),
   );
 }
 

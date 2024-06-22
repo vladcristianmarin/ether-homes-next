@@ -1,10 +1,18 @@
 import { Contract } from 'ethers';
 import type { PropsWithChildren } from 'react';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
+import EscrowAbi from '@/abis/Escrow.json';
 import MarketplaceAbi from '@/abis/Marketplace.json';
 import RealEstateAbi from '@/abis/RealEstate.json';
-import type { Marketplace, RealEstate } from '@/typechain-types';
+import type { Escrow, Marketplace, RealEstate } from '@/typechain-types';
 
 import { useWallet } from './wallet-context';
 
@@ -15,6 +23,7 @@ interface IContractsContext {
   marketplace: Marketplace | undefined;
   isInspector: boolean;
   loadingInspectorStatus: boolean | undefined;
+  getEscrowContract: (escrowAddress: string) => Escrow | null;
 }
 
 const ContractsContext = createContext<IContractsContext>(
@@ -82,6 +91,16 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
     isInspector().then().catch();
   }, [account, realEstate]);
 
+  const getEscrowContract = useCallback((escrowAddress: string) => {
+    if (escrowAddress === '0x0000000000000000000000000000000000000000')
+      return null;
+
+    const escrow = new Contract(escrowAddress, EscrowAbi.abi);
+
+    // @ts-ignore
+    return escrow as Escrow;
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       realEstate,
@@ -90,8 +109,10 @@ const ContractsContextProvider: React.FC<PropsWithChildren> = ({
       marketplaceAddress,
       isInspector,
       loadingInspectorStatus,
+      getEscrowContract,
     }),
     [
+      getEscrowContract,
       isInspector,
       loadingInspectorStatus,
       marketplace,

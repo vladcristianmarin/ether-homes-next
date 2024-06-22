@@ -43,7 +43,7 @@ contract Marketplace {
     }
 
     modifier onlyLender(uint256 _nftId) {
-        require(msg.sender == Escrow(listings[_nftId].escrow).lender(), 'Only lender can call this method');
+        require(msg.sender == Escrow(listings[_nftId].escrow).lender() || msg.sender == Escrow(listings[_nftId].escrow).buyer(), 'Only lender can call this method');
         _;
     }
 
@@ -123,10 +123,12 @@ contract Marketplace {
     }
 
     function approve(uint256 _nftId) public {
+        require(msg.sender == listings[_nftId].buyer || msg.sender == Escrow(listings[_nftId].escrow).lender(), 'Only buyer or lender can call this method');
+
         require(activeListings[_nftId] == true, 'Property not listed');
 
         Escrow escrow = Escrow(listings[_nftId].escrow);
-        escrow.approve();
+        escrow.approve(msg.sender);
     }
 
     function cancel(uint256 _nftId) public {
@@ -142,8 +144,7 @@ contract Marketplace {
         Escrow escrow = Escrow(listings[_nftId].escrow);
 
         require(escrow.price() == msg.value, 'Transaction amount is not correct');
-        bool success = payable(address(escrow)).send(msg.value);
-        require(success, "Transfer to escrow failed");
+        escrow.pay{value: msg.value}();
     }
 
     function finalizeTransaction(uint256 _nftId) public onlySeller(_nftId) {

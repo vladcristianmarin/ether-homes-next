@@ -3,7 +3,7 @@
 import { Spinner } from '@nextui-org/react';
 import axios from 'axios';
 import type { NextPage } from 'next';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 import ListedPropertyItem from '@/components/listed-property-item';
@@ -29,42 +29,40 @@ const ListedProperties: NextPage = () => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchSellersListedProperties = async () => {
-      if (marketplace && account) {
-        setIsLoading(true);
-        try {
-          const marketData = await marketplace.getListedBySeller(
-            account.address,
-          );
-          setMarketplaceData(marketData);
+  const fetchSellersListedProperties = useCallback(async () => {
+    if (marketplace && account) {
+      setIsLoading(true);
+      try {
+        const marketData = await marketplace.getListedBySeller(account.address);
+        setMarketplaceData(marketData);
 
-          const properties = await Promise.all(
-            marketData.map(
-              async (listedProperty: Marketplace.ListingStructOutput) => {
-                const response = await axios.get(
-                  listedProperty.nftURI.replace('ipfs://', IPFS_GATEWAY),
-                );
+        const properties = await Promise.all(
+          marketData.map(
+            async (listedProperty: Marketplace.ListingStructOutput) => {
+              const response = await axios.get(
+                listedProperty.nftURI.replace('ipfs://', IPFS_GATEWAY),
+              );
 
-                return {
-                  ...simplifyProperty(response.data),
-                  price: Number(listedProperty.price),
-                };
-              },
-            ),
-          );
+              return {
+                ...simplifyProperty(response.data),
+                price: Number(listedProperty.price),
+              };
+            },
+          ),
+        );
 
-          setProperties(properties);
-        } catch (err) {
-          toast('Something went wrong', { type: 'error' });
-        } finally {
-          setIsLoading(false);
-        }
+        setProperties(properties);
+      } catch (err) {
+        toast('Something went wrong', { type: 'error' });
+      } finally {
+        setIsLoading(false);
       }
-    };
-
-    fetchSellersListedProperties().then().catch();
+    }
   }, [account, marketplace]);
+
+  useEffect(() => {
+    fetchSellersListedProperties().then().catch();
+  }, [fetchSellersListedProperties]);
 
   return (
     <div className="flex w-full flex-col items-start">
@@ -86,6 +84,7 @@ const ListedProperties: NextPage = () => {
               key={`${property.name}-${index}`}
               property={property}
               marketplaceData={marketplaceData[index]}
+              refetch={fetchSellersListedProperties}
             />
           );
         })
