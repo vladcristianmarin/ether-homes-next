@@ -3,6 +3,7 @@ import {
   Card,
   CardBody,
   CardFooter,
+  Chip,
   Image,
   useDisclosure,
 } from '@nextui-org/react';
@@ -23,6 +24,8 @@ interface IListedPropertyItemProps {
   property: SimplifiedTokenizedProperty;
   marketplaceData: Marketplace.ListingStructOutput;
   refetch: () => Promise<void>;
+
+  isDashboard?: boolean;
 }
 
 const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
@@ -34,6 +37,8 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
   property,
   marketplaceData,
   refetch,
+
+  isDashboard,
 }) => {
   const { isOpen, onOpenChange, onOpen } = useDisclosure();
 
@@ -338,6 +343,25 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
           className="h-72 w-full object-cover"
           src={property.image.replace('ipfs://', IPFS_GATEWAY)}
         />
+        {isDashboard ? null : account?.address === marketplaceData.seller ? (
+          <Chip
+            color="success"
+            size="sm"
+            variant="shadow"
+            className="absolute right-3 top-3 z-50"
+          >
+            <p className="text-sm font-light text-white">Owned</p>
+          </Chip>
+        ) : account?.address === marketplaceData.buyer ? (
+          <Chip
+            color="success"
+            size="sm"
+            variant="shadow"
+            className="absolute right-3 top-3 z-50"
+          >
+            <p className="text-sm font-medium text-white">Buying proccess...</p>
+          </Chip>
+        ) : null}
       </CardBody>
       <CardFooter className="max-w-[420px] flex-col items-start gap-1">
         <p className="mb-3 flex items-center text-2xl font-bold">
@@ -372,15 +396,17 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
           </div>
         </div>
 
-        <Button
-          // @ts-ignore
-          color={actionButton.color ?? 'primary'}
-          className="mt-3"
-          onClick={actionButton.onClick}
-          isDisabled={actionButton.isDisabled}
-        >
-          <p className="mx-6">{actionButton.title}</p>
-        </Button>
+        {isDashboard ? (
+          <Button
+            // @ts-ignore
+            color={actionButton.color ?? 'primary'}
+            className="mt-3"
+            onClick={actionButton.onClick}
+            isDisabled={actionButton.isDisabled}
+          >
+            <p className="mx-6">{actionButton.title}</p>
+          </Button>
+        ) : null}
       </CardFooter>
       <BuyOffersModal
         isOpen={isOpen}

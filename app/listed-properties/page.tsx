@@ -81,6 +81,7 @@ const ListedProperties: NextPage = () => {
         properties.map((property, index) => {
           return (
             <ListedPropertyItem
+              isDashboard
               key={`${property.name}-${index}`}
               property={property}
               marketplaceData={marketplaceData[index]}

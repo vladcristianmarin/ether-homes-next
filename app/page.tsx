@@ -54,6 +54,7 @@ export default function Home() {
     <div className="grid grid-cols-3 gap-3">
       {properties.map((property, index) => (
         <ListedPropertyItem
+          isDashboard={false}
           key={`${property.name}-${index}`}
           property={property}
           marketplaceData={listedPropertiesData[index]}
