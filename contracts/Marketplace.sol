@@ -47,8 +47,11 @@ contract Marketplace {
         _;
     }
 
-    function listProperty(uint256 _nftId, string memory _nftURI, uint256 _price) public {
+    function listProperty(uint256 _nftId, address owner, string memory _nftURI, uint256 _price) public {
+        require(msg.sender == owner, "Owner not the same as caller");
         require(activeListings[_nftId] == false, 'Property already listed');
+        IERC721(realEstateAddress).updateListedProperty(_nftId, owner, true);
+        
         listings[_nftId] = Listing(_nftId, _nftURI, msg.sender, address(0), _price, true, new address[](0), address(0));
         activeListings[_nftId] = true;
         listed.push(_nftId);
@@ -56,7 +59,8 @@ contract Marketplace {
         count++;
     }
 
-    function cancelListing(uint256 _nftId) public onlySeller(_nftId) {
+    function cancelListing(uint256 _nftId, address owner) public onlySeller(_nftId) {
+        require(msg.sender == owner, "Owner not the same as caller");
         require(activeListings[_nftId] == true, 'Property not listed');
         activeListings[_nftId] = false;
 
@@ -66,6 +70,8 @@ contract Marketplace {
             Escrow escrow = Escrow(listings[_nftId].escrow);
             escrow.cancel();
         }
+
+        IERC721(realEstateAddress).updateListedProperty(_nftId, owner, false);
 
         emit ListingCanceled(_nftId);
     }
@@ -84,7 +90,7 @@ contract Marketplace {
         require(listings[_nftId].buyer == address(0), 'Buyer already accepted');
 
         listings[_nftId].buyer = _buyer;
-        Escrow escrow = new Escrow(msg.sender, _buyer, _nftId, listings[_nftId].price, 300000000000000, realEstateAddress);
+        Escrow escrow = new Escrow(msg.sender, _buyer, _nftId, listings[_nftId].price, listings[_nftId].price / 40, realEstateAddress);
         listings[_nftId].escrow = address(escrow);
         emit EscrowCreated(_nftId, listings[_nftId].escrow);
         IERC721(realEstateAddress).transferFrom(msg.sender, address(escrow), _nftId);

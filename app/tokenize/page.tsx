@@ -14,7 +14,7 @@ import type { RealEstate } from '@/typechain-types';
 
 const TokenizePage: NextPage = () => {
   const { account } = useWallet();
-  const { realEstate } = useContracts();
+  const { realEstate, marketplace } = useContracts();
   const [properties, setProperties] = useState<RealEstate.PropertyStruct[]>([]);
   const [tokens, setTokens] = useState<bigint[]>([]);
   const [isLoadingProperties, setIsLoadingProperties] =
@@ -44,14 +44,42 @@ const TokenizePage: NextPage = () => {
   }, [account, load, realEstate]);
 
   useEffect(() => {
+    let propertyCreated = null;
+    let tokenCreated = null;
     if (realEstate && account) {
-      realEstate
-        .connect(account)
-        .on(realEstate.getEvent('PropertyCreated'), async () => {
-          await load();
-        });
+      propertyCreated = realEstate.getEvent('PropertyCreated');
+      realEstate.connect(account).on(propertyCreated, async () => {
+        await load();
+      });
+
+      tokenCreated = realEstate.getEvent('TokenCreated');
+      realEstate.connect(account).on(tokenCreated, async () => {
+        await load();
+      });
     }
+
+    return () => {
+      if (realEstate) {
+        if (propertyCreated) realEstate.removeAllListeners(propertyCreated);
+        if (tokenCreated) realEstate.removeAllListeners(tokenCreated);
+      }
+    };
   }, [account, load, realEstate]);
+
+  useEffect(() => {
+    let event = null;
+    if (marketplace && account) {
+      event = marketplace.getEvent('PropertyListed');
+
+      marketplace.connect(account).on(event, async () => {
+        await load();
+      });
+    }
+
+    return () => {
+      if (event && marketplace) marketplace.removeAllListeners(event);
+    };
+  }, [account, load, marketplace]);
 
   return (
     <div className="grid min-h-max w-full grid-cols-9 gap-4">

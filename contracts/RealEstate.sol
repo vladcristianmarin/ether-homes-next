@@ -88,6 +88,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
   }
 
   event PropertyCreated(Property property);
+  event TokenCreated(uint256 token);
 
   function createProperty(
     string memory _city,
@@ -164,6 +165,7 @@ contract RealEstate is ERC721URIStorage, Ownable {
     tokenIdToPropertyId[tokenId] = propertyId;
     properties[msg.sender][propertyId].isTokenized = true;
 
+    emit TokenCreated(tokenId);
     return tokenId;
   }
 
@@ -332,15 +334,15 @@ contract RealEstate is ERC721URIStorage, Ownable {
     return false;
   }
 
-  function updateListedProperty(uint256 propertyId, bool isListed) public _onlyOwner(msg.sender, propertyId) {
-    Property memory property = properties[msg.sender][propertyId];
+  function updateListedProperty(uint256 propertyId, address owner, bool isListed) public _onlyOwner(owner, propertyId) {
+    Property memory property = properties[owner][propertyId];
 
     require(
       property.owner != 0x0000000000000000000000000000000000000000,
       'Property was not found!'
     );
 
-    properties[msg.sender][propertyId].isListed = isListed;
+    properties[owner][propertyId].isListed = isListed;
   }
 
   function assignIpfsFile(

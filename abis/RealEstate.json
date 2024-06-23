@@ -341,6 +341,19 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "token",
+          "type": "uint256"
+        }
+      ],
+      "name": "TokenCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": true,
           "internalType": "address",
           "name": "from",
@@ -1365,6 +1378,11 @@
           "type": "uint256"
         },
         {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
           "internalType": "bool",
           "name": "isListed",
           "type": "bool"
@@ -1412,5 +1430,5 @@
       "type": "function"
     }
   ],
-  "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
+  "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1"
 }

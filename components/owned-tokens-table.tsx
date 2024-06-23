@@ -2,7 +2,8 @@
 
 import { Button, Spinner, Tooltip, useDisclosure } from '@nextui-org/react';
 import type { AddressLike } from 'ethers';
-import React, { useEffect, useRef, useState } from 'react';
+import { ethers } from 'ethers';
+import React, { useState } from 'react';
 import { FaExternalLinkAlt } from 'react-icons/fa';
 import { MdOutlineSell } from 'react-icons/md';
 import { toast } from 'react-toastify';
@@ -21,41 +22,11 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
   tokens,
   isLoading,
 }) => {
-  const { account } = useWallet();
+  const { account, address } = useWallet();
   const { realEstate, marketplace, realEstateAddress, marketplaceAddress } =
     useContracts();
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
   const [tokenForListing, setTokenForListing] = useState<bigint>(BigInt(0));
-
-  const lock = useRef<boolean>(false);
-
-  useEffect(() => {
-    let event = null;
-    if (marketplace && realEstate && account) {
-      event = marketplace.getEvent('PropertyListed');
-
-      // Asumam ca nftId === propertyId (ceea ce ar trb sa fie)
-      marketplace.connect(account).once(event, async (nftId) => {
-        if (!lock.current) {
-          lock.current = true;
-
-          const transaction = await realEstate
-            .connect(account)
-            .updateListedProperty(nftId, true);
-
-          await transaction.wait();
-
-          lock.current = false;
-        }
-
-        toast('Property listed successfully!', { type: 'success' });
-      });
-    }
-
-    return () => {
-      if (event && marketplace) marketplace.removeAllListeners(event);
-    };
-  }, [account, marketplace, realEstate]);
 
   const handleOpenTokenURI = async (token: bigint) => {
     if (realEstate) {
@@ -77,24 +48,27 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
   };
 
   const handleConfirmList = async (price: number) => {
-    if (marketplace && realEstate) {
+    if (marketplace && realEstate && address) {
       try {
         const tokenURI = await realEstate.tokenURI(tokenForListing);
 
-        let transaction = await marketplace.listProperty(
-          tokenForListing,
-          tokenURI,
-          price,
-        );
-
-        await transaction.wait();
-
-        transaction = await realEstate
+        let transaction = await realEstate
           .connect(account)
           .approve(marketplaceAddress as AddressLike, tokenForListing);
 
         await transaction.wait();
+
+        transaction = await marketplace.listProperty(
+          tokenForListing,
+          address,
+          tokenURI,
+          ethers.parseEther(price.toString()),
+        );
+
+        await transaction.wait();
         onClose();
+
+        toast('Property listed successfully', { type: 'success' });
       } catch (err: any) {
         toast('Listing property failed', { type: 'error' });
       }

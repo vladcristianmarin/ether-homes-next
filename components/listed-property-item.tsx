@@ -341,7 +341,8 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
       </CardBody>
       <CardFooter className="max-w-[420px] flex-col items-start gap-1">
         <p className="mb-3 flex items-center text-2xl font-bold">
-          {property.price} <FaEthereum /> ETH
+          {ethers.formatEther(property.price?.toString() ?? '0')}
+          <FaEthereum /> ETH
         </p>
         <p className="text-medium font-semibold">
           {property.propertyaddress} {property.city}
