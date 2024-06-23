@@ -62,6 +62,7 @@ contract Marketplace {
     function cancelListing(uint256 _nftId, address owner) public onlySeller(_nftId) {
         require(msg.sender == owner, "Owner not the same as caller");
         require(activeListings[_nftId] == true, 'Property not listed');
+        IERC721(realEstateAddress).updateListedProperty(_nftId, owner, false);
         activeListings[_nftId] = false;
 
         listings[_nftId].isActive = false;
@@ -71,7 +72,7 @@ contract Marketplace {
             escrow.cancel();
         }
 
-        IERC721(realEstateAddress).updateListedProperty(_nftId, owner, false);
+        count--;
 
         emit ListingCanceled(_nftId);
     }
@@ -188,5 +189,25 @@ contract Marketplace {
         }
 
         return listingsBySeller;
+    }
+
+      function getActiveListings() public view returns (Listing[] memory) {
+        uint activeCount = 0;
+        for (uint i = 0; i < count; i++) {
+            if (listings[i].isActive) {
+                activeCount++;
+            }
+        }
+
+        Listing[] memory returnActiveListings = new Listing[](activeCount);
+        uint j = 0;
+        for (uint i = 0; i < count; i++) {
+            if (listings[i].isActive) {
+                returnActiveListings[j] = listings[i];
+                j++;
+            }
+        }
+
+        return returnActiveListings;
     }
 }

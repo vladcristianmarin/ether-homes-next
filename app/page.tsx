@@ -24,7 +24,7 @@ export default function Home() {
 
   const fetchProperties = useCallback(async () => {
     if (marketplace) {
-      const listedProperties = await marketplace.getAllListed();
+      const listedProperties = await marketplace.getActiveListings();
       setListedPropertiesData(listedProperties);
 
       const properties = await Promise.all(

@@ -42,7 +42,7 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
 }) => {
   const { isOpen, onOpenChange, onOpen } = useDisclosure();
 
-  const { account } = useWallet();
+  const { account, address } = useWallet();
   const { marketplace, getEscrowContract } = useContracts();
 
   const [escrowProps, setEscrowProps] = useState<{
@@ -327,12 +327,44 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
     handleFinalizeTransaction,
   ]);
 
+  const handleCancelListing = async () => {
+    if (account == null) {
+      return toast('You need to connect an account!', { type: 'error' });
+    }
+
+    if (marketplace == null || address == null) {
+      return toast('Something went wrong!', { type: 'error' });
+    }
+
+    try {
+      const transaction = await marketplace
+        .connect(account)
+        .cancelListing(marketplaceData.nftId, address);
+
+      await transaction.wait();
+
+      toast('Property unlisted successfully!', { type: 'success' });
+    } catch (err: any) {
+      console.log(err);
+      toast(err.reason ?? 'Something went wrong', { type: 'error' });
+    }
+
+    return null;
+  };
+
   const handlePressProperty = () => {
     window.open(marketplaceData.nftURI, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <Card shadow="sm" isPressable onPress={handlePressProperty}>
+    <Card
+      shadow="sm"
+      isPressable={marketplaceData.isActive}
+      onPress={handlePressProperty}
+      isDisabled={!marketplaceData.isActive}
+      disableRipple={!marketplaceData.isActive}
+      aria-disabled={!marketplaceData.isActive}
+    >
       <CardBody className="overflow-visible p-0">
         <Image
           shadow="sm"
@@ -362,6 +394,16 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
             <p className="text-sm font-medium text-white">Buying proccess...</p>
           </Chip>
         ) : null}
+        {!marketplaceData.isActive ? (
+          <Chip
+            color="danger"
+            size="sm"
+            variant="shadow"
+            className="absolute right-3 top-3 z-50"
+          >
+            Removed
+          </Chip>
+        ) : null}
       </CardBody>
       <CardFooter className="max-w-[420px] flex-col items-start gap-1">
         <p className="mb-3 flex items-center text-2xl font-bold">
@@ -375,37 +417,43 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
           {property.description}
         </p>
 
-        <div className="mt-6 flex items-center justify-start gap-3">
-          <div className="flex items-center justify-start gap-1 rounded-md bg-sky-100 p-3">
-            <LuConstruction className="text-black" />
-            <p className="text-sm text-black">
-              Built in {property.yearofconstruction}
-            </p>
+        {!isDashboard ? (
+          <div className="mt-6 flex items-center justify-start gap-3">
+            <div className="flex items-center justify-start gap-1 rounded-md bg-sky-100 p-3">
+              <LuConstruction className="text-black" />
+              <p className="text-sm text-black">
+                Built in {property.yearofconstruction}
+              </p>
+            </div>
+            <div className="flex items-center justify-start gap-1 rounded-md bg-orange-100 p-3">
+              <LuRuler className="text-black" />
+              <p className="text-sm text-black">{property.totalarea}m2</p>
+            </div>
+            <div className="flex items-center justify-start gap-1 rounded-md bg-red-100 p-3">
+              <LuBedDouble className="text-black" />
+              <p className="text-sm text-black">{property.rooms}</p>
+            </div>
+            <div className="flex items-center justify-start gap-1 rounded-md bg-green-100 p-3">
+              <LuBath className="text-black" />
+              <p className="text-sm text-black">{property.bathrooms}</p>
+            </div>
           </div>
-          <div className="flex items-center justify-start gap-1 rounded-md bg-orange-100 p-3">
-            <LuRuler className="text-black" />
-            <p className="text-sm text-black">{property.totalarea}m2</p>
-          </div>
-          <div className="flex items-center justify-start gap-1 rounded-md bg-red-100 p-3">
-            <LuBedDouble className="text-black" />
-            <p className="text-sm text-black">{property.rooms}</p>
-          </div>
-          <div className="flex items-center justify-start gap-1 rounded-md bg-green-100 p-3">
-            <LuBath className="text-black" />
-            <p className="text-sm text-black">{property.bathrooms}</p>
-          </div>
-        </div>
+        ) : null}
 
         {isDashboard ? (
-          <Button
-            // @ts-ignore
-            color={actionButton.color ?? 'primary'}
-            className="mt-3"
-            onClick={actionButton.onClick}
-            isDisabled={actionButton.isDisabled}
-          >
-            <p className="mx-6">{actionButton.title}</p>
-          </Button>
+          <div className="mt-6 flex w-full flex-1 items-center justify-between">
+            <Button
+              // @ts-ignore
+              color={actionButton.color ?? 'primary'}
+              onClick={actionButton.onClick}
+              isDisabled={actionButton.isDisabled}
+            >
+              <p className="mx-6">{actionButton.title}</p>
+            </Button>
+            <Button color="danger" onClick={handleCancelListing}>
+              Unlist
+            </Button>
+          </div>
         ) : null}
       </CardFooter>
       <BuyOffersModal

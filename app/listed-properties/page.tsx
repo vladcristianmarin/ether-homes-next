@@ -64,6 +64,21 @@ const ListedProperties: NextPage = () => {
     fetchSellersListedProperties().then().catch();
   }, [fetchSellersListedProperties]);
 
+  useEffect(() => {
+    let event = null;
+    if (marketplace && account) {
+      event = marketplace.getEvent('ListingCanceled');
+
+      marketplace.connect(account).on(event, async () => {
+        await fetchSellersListedProperties();
+      });
+    }
+
+    return () => {
+      if (event && marketplace) marketplace.removeAllListeners(event);
+    };
+  }, [account, fetchSellersListedProperties, marketplace]);
+
   return (
     <div className="flex w-full flex-col items-start">
       {isLoading ? (
