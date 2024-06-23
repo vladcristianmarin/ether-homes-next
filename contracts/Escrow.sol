@@ -4,6 +4,7 @@ pragma solidity 0.8.25;
 interface IERC721 {
     function transferFrom(address _from, address _to, uint256 _id) external;
     function updateListedProperty(uint256 propertyId, address owner, bool isListed) external;
+    function finalizeTransaction(uint256 propertyId, address oldOwner, address newOwner) external;
 }
 
 contract Escrow {
@@ -64,7 +65,7 @@ contract Escrow {
     function cancel() public {
         // TODO: Return money to buyer if cancel
         // require(msg.sender == seller || msg.sender == buyer, 'Only seller or buyer can call this method');
-        require(state == EscrowState.Created, 'Escrow is not in Created state');
+        require(state == EscrowState.Created || state == EscrowState.Finalized, 'Escrow is locked');
 
         IERC721(realEstateAddress).transferFrom(address(this), seller, nftId);
         state = EscrowState.Canceled;

@@ -125,7 +125,7 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
       const transaction = await marketplace
         .connect(account)
         .payDeposit(marketplaceData.nftId, {
-          value: ethers.parseEther('0.0003'),
+          value: marketplaceData.price / BigInt(40),
         });
 
       await transaction.wait();
@@ -138,7 +138,7 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
     }
 
     return null;
-  }, [account, marketplace, marketplaceData.nftId, refetch]);
+  }, [account, marketplace, marketplaceData, refetch]);
 
   const handlePayProperty = useCallback(async () => {
     if (account == null) {
@@ -440,7 +440,9 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
           </div>
         ) : null}
 
-        {isDashboard ? (
+        {(marketplaceData.buyer === address ||
+          marketplaceData.seller === address) &&
+        !isDashboard ? null : (
           <div className="mt-6 flex w-full flex-1 items-center justify-between">
             <Button
               // @ts-ignore
@@ -450,11 +452,13 @@ const ListedPropertyItem: React.FC<IListedPropertyItemProps> = ({
             >
               <p className="mx-6">{actionButton.title}</p>
             </Button>
-            <Button color="danger" onClick={handleCancelListing}>
-              Unlist
-            </Button>
+            {marketplaceData.seller === address ? (
+              <Button color="danger" onClick={handleCancelListing}>
+                Unlist
+              </Button>
+            ) : null}
           </div>
-        ) : null}
+        )}
       </CardFooter>
       <BuyOffersModal
         isOpen={isOpen}

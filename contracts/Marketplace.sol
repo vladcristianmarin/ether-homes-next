@@ -159,6 +159,15 @@ contract Marketplace {
 
         Escrow escrow = Escrow(listings[_nftId].escrow);
         escrow.finalize();
+
+        IERC721(realEstateAddress).finalizeTransaction(_nftId, listings[_nftId].seller, listings[_nftId].buyer);
+        listings[_nftId].isActive = false;
+        listings[_nftId].buyer = address(0);
+        listings[_nftId].seller = address(0);
+        listings[_nftId].escrow = address(0);
+        listings[_nftId].nftId = 0;
+        listings[_nftId].price = 0;
+        activeListings[_nftId] = false;
     }
 
     function getAllListed() public view returns (Listing[] memory) {
@@ -189,6 +198,26 @@ contract Marketplace {
         }
 
         return listingsBySeller;
+    }
+
+        function getListedByBuyer(address buyer) public view returns (Listing[] memory) {
+        uint256 byBuyerCount;
+
+        for(uint256 i = 0; i < count; i++) {
+            if(listings[listed[i]].buyer ==buyer) {
+                byBuyerCount++;
+            }
+        }
+
+        Listing[] memory listingsByBuyer = new Listing[](byBuyerCount);
+
+        for(uint256 i = 0; i < count; i++)  {
+            if(listings[listed[i]].buyer == buyer) {
+                listingsByBuyer[i] = listings[listed[i]];
+            }
+        }
+
+        return listingsByBuyer;
     }
 
       function getActiveListings() public view returns (Listing[] memory) {

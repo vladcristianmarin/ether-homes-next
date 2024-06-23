@@ -1,4 +1,5 @@
 import '@nomicfoundation/hardhat-toolbox';
+
 import type { HardhatUserConfig } from 'hardhat/config';
 
 const config: HardhatUserConfig = {
@@ -7,13 +8,13 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 1000,
       },
     },
   },
   networks: {
     hardhat: {
       chainId: 1337,
+      allowUnlimitedContractSize: true,
     },
   },
 };

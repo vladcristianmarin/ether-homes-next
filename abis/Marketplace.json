@@ -320,6 +320,67 @@
       "inputs": [
         {
           "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        }
+      ],
+      "name": "getListedByBuyer",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "nftId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "nftURI",
+              "type": "string"
+            },
+            {
+              "internalType": "address",
+              "name": "seller",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "escrow",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "price",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isActive",
+              "type": "bool"
+            },
+            {
+              "internalType": "address[]",
+              "name": "buyers",
+              "type": "address[]"
+            },
+            {
+              "internalType": "address",
+              "name": "buyer",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct Marketplace.Listing[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
           "name": "seller",
           "type": "address"
         }
@@ -549,5 +610,5 @@
       "type": "function"
     }
   ],
-  "address": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319"
+  "address": "0x70e0bA845a1A0F2DA3359C97E0285013525FFC49"
 }

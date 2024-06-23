@@ -141,13 +141,6 @@ contract RealEstate is ERC721URIStorage, Ownable {
     return propertyId;
   }
 
-  function mintDummy(string memory tokenURI) public returns (uint256) {
-    _mint(msg.sender, 0);
-    _setTokenURI(0, tokenURI);
-
-    return 0;
-  }
-
   function createTokenURI(
     uint256 propertyId
   )
@@ -167,17 +160,6 @@ contract RealEstate is ERC721URIStorage, Ownable {
 
     emit TokenCreated(tokenId);
     return tokenId;
-  }
-
-  function updateTokenURI(
-    uint256 tokenID,
-    string memory newTokenURI
-  ) public _onlyMinted(tokenID) {
-    require(
-      ownerOf(tokenID) == msg.sender,
-      'Only the owner can update the token URI'
-    );
-    _setTokenURI(tokenID, newTokenURI);
   }
 
   function getOwnershipHistory(
@@ -343,6 +325,21 @@ contract RealEstate is ERC721URIStorage, Ownable {
     );
 
     properties[owner][propertyId].isListed = isListed;
+  }
+
+  function finalizeTransaction(uint256 propertyId, address oldOwner, address newOwner) public _onlyOwner(oldOwner, propertyId) {
+     Property memory property = properties[oldOwner][propertyId];
+
+    require(
+      property.owner != 0x0000000000000000000000000000000000000000,
+      'Property was not found!'
+    );
+  
+    properties[oldOwner][propertyId].owner = newOwner;
+    properties[oldOwner][propertyId].isListed = false;
+
+    properties[newOwner][propertyId] = properties[oldOwner][propertyId];
+
   }
 
   function assignIpfsFile(
