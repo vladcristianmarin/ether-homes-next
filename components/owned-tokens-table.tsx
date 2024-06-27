@@ -34,7 +34,12 @@ const OwnedTokensTable: React.FC<OwnedTokensTableProps> = ({
         const tokenURI = await realEstate.tokenURI(token);
 
         if (tokenURI) {
-          window.open(tokenURI, '_blank', 'noopener,noreferrer');
+          const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
+          window.open(
+            tokenURI.replace('ipfs://', IPFS_GATEWAY),
+            '_blank',
+            'noopener,noreferrer',
+          );
         }
       } catch (e: any) {
         toast('Open token URI failed', { type: 'error' });

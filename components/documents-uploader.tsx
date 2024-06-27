@@ -1,10 +1,12 @@
+import { Button } from '@nextui-org/button';
 import type React from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FaFilePdf } from 'react-icons/fa';
 
 interface DocumentsUploaderProps {
-  onAcceptedFiles?: (files: File[]) => void | Promise<void>;
+  isLoading?: boolean;
+  onUploadFiles: (files: File[], type: 'doc' | 'image') => void | Promise<void>;
 }
 
 export interface DocumentsUploaderController {
@@ -14,7 +16,7 @@ export interface DocumentsUploaderController {
 const DocumentsUploader = forwardRef<
   DocumentsUploaderController,
   DocumentsUploaderProps
->(function DocumentsUploader({ onAcceptedFiles }, ref) {
+>(function DocumentsUploader({ isLoading, onUploadFiles }, ref) {
   const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
 
   useImperativeHandle(
@@ -27,13 +29,9 @@ const DocumentsUploader = forwardRef<
     [],
   );
 
-  const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
-      setAcceptedFiles(acceptedFiles);
-      onAcceptedFiles?.(acceptedFiles);
-    },
-    [onAcceptedFiles],
-  );
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    setAcceptedFiles(acceptedFiles);
+  }, []);
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
@@ -45,7 +43,7 @@ const DocumentsUploader = forwardRef<
       <div className="flex size-full items-center justify-center">
         <label
           htmlFor="dropzone-file"
-          className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
+          className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 px-10 hover:bg-gray-100"
         >
           <div className="flex flex-row items-center justify-center gap-2 pb-3 pt-2">
             <FaFilePdf />
@@ -66,6 +64,22 @@ const DocumentsUploader = forwardRef<
                 </div>
               ))}
             </div>
+          ) : null}
+
+          {acceptedFiles?.length > 0 ? (
+            <Button
+              color="primary"
+              className=" mb-2"
+              size="sm"
+              fullWidth
+              onClick={() => {
+                onUploadFiles(acceptedFiles, 'doc');
+              }}
+              isLoading={isLoading}
+              isDisabled={isLoading}
+            >
+              Generate IPFS
+            </Button>
           ) : null}
 
           <input {...getInputProps()} type="file" id="dropzone-file" />

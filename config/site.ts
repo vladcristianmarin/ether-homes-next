@@ -5,7 +5,7 @@ export const siteConfig = {
   description: 'Transact Realestate using cutting edge blockchain technology!',
   navItems: [
     {
-      label: 'Tokenize property',
+      label: 'Properties dashboard',
       href: '/tokenize',
     },
     {

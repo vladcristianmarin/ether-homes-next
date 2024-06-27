@@ -1,7 +1,8 @@
 import { Button, Chip, Input, Link, Spinner, Tooltip } from '@nextui-org/react';
+import axios from 'axios';
 import { useFormik } from 'formik';
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { FaUpload } from 'react-icons/fa6';
 import { LuUndo2 } from 'react-icons/lu';
 import { toast } from 'react-toastify';
@@ -9,6 +10,11 @@ import * as Yup from 'yup';
 
 import { useContracts } from '@/context/contracts-context';
 import { useWallet } from '@/context/wallet-context';
+
+import type { DocumentsUploaderController } from './documents-uploader';
+import DocumentsUploader from './documents-uploader';
+import type { ImageUploaderController } from './image-uploader';
+import ImageUploader from './image-uploader';
 
 interface Property {
   city: string;
@@ -147,6 +153,14 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
   const { realEstate } = useContracts();
   const { account } = useWallet();
 
+  const [documentsUploadLoading, setDocumentsUploadLoading] =
+    useState<boolean>(false);
+  const [imagesUploadLoading, setimagesUploadLoading] =
+    useState<boolean>(false);
+
+  const documentsUploaderRef = useRef<DocumentsUploaderController>(null);
+  const imagesUploaderRef = useRef<ImageUploaderController>(null);
+
   const formik = useFormik<Property>({
     initialValues: {
       city: '',
@@ -242,6 +256,58 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
       formik.setFieldValue(field, [...formik.values[field], value]).then(() => {
         field === 'documentsUris' ? setDocumentUri('') : setImageUri('');
       });
+    }
+  };
+
+  const handleUploadFileIPFS = async (files: File[], type: 'doc' | 'image') => {
+    const requests = files.map((file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      return axios.post(
+        'https://api.pinata.cloud/pinning/pinFileToIPFS',
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_PINATA_JWT}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+    });
+
+    if (type === 'doc') {
+      setDocumentsUploadLoading(true);
+    } else if (type === 'image') {
+      setimagesUploadLoading(true);
+    }
+
+    try {
+      const response = await Promise.all(requests);
+
+      const IPFS_URIS = response.map((response) =>
+        'ipfs://'.concat(response.data.IpfsHash),
+      );
+
+      if (type === 'doc') {
+        documentsUploaderRef.current?.clearFiles();
+        await formik.setFieldValue('documentsUris', [
+          ...formik.values.documentsUris,
+          ...IPFS_URIS,
+        ]);
+      } else if (type === 'image') {
+        imagesUploaderRef.current?.clearFiles();
+        await formik.setFieldValue('imagesUris', [
+          ...formik.values.imagesUris,
+          ...IPFS_URIS,
+        ]);
+      }
+    } catch (err: any) {
+      console.log(err);
+      toast('Something went wrong', { type: 'error' });
+    } finally {
+      setDocumentsUploadLoading(false);
+      setimagesUploadLoading(false);
     }
   };
 
@@ -361,6 +427,11 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
             onBlur={(e) => handleBlurUrl('documentsUris', e)}
             onClose={handleDeleteValue}
           />
+          <DocumentsUploader
+            isLoading={documentsUploadLoading}
+            ref={documentsUploaderRef}
+            onUploadFiles={handleUploadFileIPFS}
+          />
         </div>
         <div className="col-span-2">
           <MultiInput
@@ -378,6 +449,11 @@ export function CreatePropertyForm(props: ICreatePropertyFormProps) {
             onKeyDown={(e) => handleConfirmUri('imagesUris', e)}
             onBlur={(e) => handleBlurUrl('imagesUris', e)}
             onClose={handleDeleteValue}
+          />
+          <ImageUploader
+            isLoading={imagesUploadLoading}
+            ref={imagesUploaderRef}
+            onUploadFiles={handleUploadFileIPFS}
           />
         </div>
 

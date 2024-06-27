@@ -1,10 +1,12 @@
+import { Button } from '@nextui-org/button';
 import type React from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { MdAddPhotoAlternate } from 'react-icons/md';
 
 interface ImageUploaderProps {
-  onAcceptedFiles?: (files: File[]) => void | Promise<void>;
+  isLoading?: boolean;
+  onUploadFiles: (files: File[], type: 'doc' | 'image') => void | Promise<void>;
 }
 
 export interface ImageUploaderController {
@@ -12,7 +14,7 @@ export interface ImageUploaderController {
 }
 
 const ImageUploader = forwardRef<ImageUploaderController, ImageUploaderProps>(
-  function DocumentsUploader({ onAcceptedFiles }, ref) {
+  function DocumentsUploader({ isLoading, onUploadFiles }, ref) {
     const [acceptedFiles, setAcceptedFiles] = useState<File[]>([]);
 
     useImperativeHandle(
@@ -24,13 +26,9 @@ const ImageUploader = forwardRef<ImageUploaderController, ImageUploaderProps>(
       },
       [],
     );
-    const onDrop = useCallback(
-      async (acceptedFiles: File[]) => {
-        setAcceptedFiles(acceptedFiles);
-        onAcceptedFiles?.(acceptedFiles);
-      },
-      [onAcceptedFiles],
-    );
+    const onDrop = useCallback(async (acceptedFiles: File[]) => {
+      setAcceptedFiles(acceptedFiles);
+    }, []);
 
     const { getRootProps, getInputProps } = useDropzone({
       onDrop,
@@ -45,7 +43,7 @@ const ImageUploader = forwardRef<ImageUploaderController, ImageUploaderProps>(
         <div className="flex size-full items-center justify-center">
           <label
             htmlFor="dropzone-file"
-            className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100"
+            className="flex size-full cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 px-10 hover:bg-gray-100"
           >
             <div className="flex flex-row items-center justify-center gap-2 pb-3 pt-2">
               <MdAddPhotoAlternate />
@@ -61,6 +59,22 @@ const ImageUploader = forwardRef<ImageUploaderController, ImageUploaderProps>(
                   {acceptedFiles[0].name}
                 </div>
               </div>
+            ) : null}
+
+            {acceptedFiles?.length > 0 ? (
+              <Button
+                color="primary"
+                className=" mb-2"
+                size="sm"
+                fullWidth
+                onClick={() => {
+                  onUploadFiles(acceptedFiles, 'image');
+                }}
+                isLoading={isLoading}
+                isDisabled={isLoading}
+              >
+                Generate IPFS
+              </Button>
             ) : null}
 
             <input {...getInputProps()} type="file" id="dropzone-file" />
